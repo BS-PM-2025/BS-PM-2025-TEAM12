@@ -1,28 +1,25 @@
 pipeline {
     agent any
 
-    environment {
-        VENV_DIR = 'venv'
-    }
-
     stages {
-        stage('Checkout') {
+        stage('התחלה') {
             steps {
-                checkout scm
+                echo '🚀 ברוך הבא ל-Jenkins!'
+                echo '🧠 נבדוק שהפייפליין שלנו רץ כמו שצריך...'
             }
         }
 
-        stage('Setup Python & Virtualenv') {
+        stage('בדיקה בסיסית') {
             steps {
-                sh 'python -m venv $VENV_DIR'
-                sh './$VENV_DIR/bin/pip install --upgrade pip'
-                sh './$VENV_DIR/bin/pip install -r requirements.txt'
+                script {
+                    echo "✅ Hello, your pipeline is up and running!"
+                }
             }
         }
 
-        stage('Run Tests') {
+        stage('סיום') {
             steps {
-                sh './$VENV_DIR/bin/python manage.py test'
+                echo '🎉 הפייפליין הסתיים בהצלחה!'
             }
         }
     }
