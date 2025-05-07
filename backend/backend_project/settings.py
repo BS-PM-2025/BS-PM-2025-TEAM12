@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',  # ← Django REST Framework
     'corsheaders',  # ← תמיכה ב-CORS
     'users',
+    'academics',
 ]
 
 MIDDLEWARE = [

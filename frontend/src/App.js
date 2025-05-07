@@ -1,3 +1,4 @@
+// src/App.js
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './LoginForm';
@@ -7,6 +8,9 @@ import ResetPassword from './ResetPassword';
 import Dashboard from './Dashboard';
 import Profile from './Profile';
 import MainLayout from './MainLayout';
+
+import ProtectedRoute from './components/ProtectedRoute';
+import UserManagementPage from './UserManagement/UserManagementPage';
 
 function App() {
   return (
@@ -21,6 +25,15 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
+
+          <Route
+            path="/user-management/users/:departmentId"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <UserManagementPage />
+              </ProtectedRoute>
+            }
+          />
         </Route>
       </Routes>
     </Router>
