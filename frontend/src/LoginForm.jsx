@@ -29,12 +29,18 @@ export default function Login() {
       });
 
       const data = await res.json();
-if (res.ok) {
-  localStorage.setItem('currentUser', JSON.stringify(data));
-  setShowSuccessModal(true);
-  setTimeout(() => navigate('/dashboard'), 2000);
-}
- else {
+      if (res.ok) {
+        // בונים אובייקט currentUser עם departmentId תקין
+        const departmentId = data.departmentId ?? data.department?.id;
+        const currentUser = {
+          ...data,
+          departmentId,
+        };
+
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        setShowSuccessModal(true);
+        setTimeout(() => navigate('/dashboard'), 2000);
+      } else {
         setErrorMessage(data.error || '❌ פרטי התחברות שגויים');
       }
     } catch {
