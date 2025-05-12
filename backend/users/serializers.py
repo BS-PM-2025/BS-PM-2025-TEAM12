@@ -4,6 +4,7 @@ from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
 from .models import User
 from academics.models import Department
+from academics.models import Course
 
 class UserSerializer(serializers.ModelSerializer):
     # Allow department selection and optional phone number
@@ -18,10 +19,16 @@ class UserSerializer(serializers.ModelSerializer):
         allow_blank=True,
         help_text="מספר טלפון"
     )
+    courses = serializers.PrimaryKeyRelatedField(
+        queryset=Course.objects.all(),
+        many=True,
+        required=False
+    )
     is_approved = serializers.BooleanField(
         required=False,
         help_text="סטטוס אישור מרצה"
     )
+
 
     class Meta:
         model = User
@@ -35,6 +42,7 @@ class UserSerializer(serializers.ModelSerializer):
             'phone_number',
             'is_approved',
             'password',
+            'courses'
         ]
         extra_kwargs = {
             'password':  {'write_only': True},
@@ -81,6 +89,10 @@ class UserSerializer(serializers.ModelSerializer):
         # Password change
         if 'password' in validated_data:
             instance.password = make_password(validated_data.get('password'))
+
+
+        if 'courses' in validated_data:
+            instance.courses.set(validated_data.get('courses'))
 
         instance.save()
         return instance

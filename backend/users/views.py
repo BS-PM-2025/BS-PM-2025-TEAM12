@@ -12,6 +12,7 @@ from rest_framework.decorators import api_view
 from .models import User
 from .serializers import UserSerializer
 from academics.models import Department
+from academics.models import Course
 
 
 class RegisterAPIView(APIView):
@@ -212,3 +213,17 @@ def delete_user(request, user_id):
     except User.DoesNotExist:
         return Response({'error': 'משתמש לא נמצא.'},
                         status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['PUT'])
+def assign_courses_to_lecturer(request, pk):
+    try:
+        lecturer = User.objects.get(id=pk, role='lecturer')
+    except User.DoesNotExist:
+        return Response({'error': 'Lecturer not found'}, status=404)
+
+    course_ids = request.data.get('course_ids', [])
+    courses = Course.objects.filter(id__in=course_ids, department=lecturer.department)
+
+    lecturer.courses.set(courses)  # מעדכן את כל הקורסים עבור המרצה
+    return Response({'success': True})
+
