@@ -10,6 +10,12 @@ const roleLabels = {
   admin:    'מזכירה',
 };
 
+const roleColors = {
+  student: 'bg-blue-100 text-blue-800 border-blue-300',
+  lecturer: 'bg-purple-100 text-purple-800 border-purple-300',
+  admin: 'bg-green-100 text-green-800 border-green-300',
+};
+
 export default function UserManagementPage() {
   const { departmentId } = useParams();
   const [users, setUsers] = useState([]);
@@ -27,6 +33,8 @@ export default function UserManagementPage() {
   });
   const [courseDialogUser, setCourseDialogUser] = useState(null);
   const [selectedCourses, setSelectedCourses] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('students');
 
   const fetchUsers = async () => {
     try {
@@ -127,129 +135,382 @@ export default function UserManagementPage() {
     }
   };
 
-  if (loading) return <p className="text-center py-12">טוען...</p>;
-  if (error) return <p className="text-red-600 text-center py-12">שגיאה: {error.message}</p>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-gray-600">טוען נתונים...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="max-w-6xl mx-auto p-6 bg-white rounded-xl shadow-xl">
+        <div className="p-6 text-center bg-red-50 rounded-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-red-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <h3 className="text-lg font-medium text-red-800">שגיאה בטעינת הנתונים</h3>
+          <p className="mt-2 text-red-600">{error.message}</p>
+        </div>
+      </div>
+    );
+  }
 
   const students = users.filter(u => u.role === 'student');
   const approvedLecturers = users.filter(u => u.role === 'lecturer' && u.is_approved);
   const pendingLecturers = users.filter(u => u.role === 'lecturer' && !u.is_approved);
+  const admins = users.filter(u => u.role === 'admin');
 
-  const renderTable = (title, data, type) => (
-    <section className="bg-white rounded-lg shadow p-6 mb-8">
-      <h3 className="text-xl font-semibold mb-4">{title}</h3>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="px-4 py-2 text-right text-sm">שם מלא</th>
-              <th className="px-4 py-2 text-right text-sm">אימייל</th>
-              <th className="px-4 py-2 text-right text-sm">ת"ז</th>
-              <th className="px-4 py-2 text-right text-sm">טלפון</th>
-              <th className="px-4 py-2 text-right text-sm">תפקיד</th>
-              <th className="px-4 py-2 text-right text-sm">מחלקה</th>
-              <th className="px-4 py-2 text-center text-sm">פעולות</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {data.map(u => (
-              <tr key={u.id}>
-                {editingId === u.id && type !== 'pending' ? (
-                  <>
-                    <td className="px-4 py-2"><input name="full_name" value={editData.full_name} onChange={handleEditChange} className="w-full border rounded px-2 py-1 text-sm" /></td>
-                    <td className="px-4 py-2 text-sm">{u.email}</td>
-                    <td className="px-4 py-2"><input name="id_number" value={editData.id_number} onChange={handleEditChange} className="w-full border rounded px-2 py-1 text-sm" /></td>
-                    <td className="px-4 py-2"><input name="phone_number" value={editData.phone_number} onChange={handleEditChange} className="w-full border rounded px-2 py-1 text-sm" /></td>
-                    <td className="px-4 py-2">
-                      <select name="role" value={editData.role} onChange={handleEditChange} className="w-full border rounded px-2 py-1 text-sm">
+  const currentDepartmentName = departments.find(d => d.id === Number(departmentId))?.name || 'כל המחלקות';
+
+  // Filter users based on search term
+  const filterUsersBySearch = (usersList) => {
+    if (!searchTerm) return usersList;
+    
+    return usersList.filter(user => 
+      user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.id_number.includes(searchTerm)
+    );
+  };
+
+  // Get active tab users
+  const getActiveTabUsers = () => {
+    switch (activeTab) {
+      case 'students':
+        return filterUsersBySearch(students);
+      case 'lecturers':
+        return filterUsersBySearch(approvedLecturers);
+      case 'pending':
+        return filterUsersBySearch(pendingLecturers);
+      case 'admins':
+        return filterUsersBySearch(admins);
+      default:
+        return [];
+    }
+  };
+
+  const activeUsers = getActiveTabUsers();
+
+  // User Card Component
+  const UserCard = ({ user, type }) => {
+    const isPending = type === 'pending';
+    const isEditing = editingId === user.id && !isPending;
+    const deptName = departments.find(d => d.id === user.department)?.name || 'לא מוגדר';
+    const userInitial = user.full_name?.charAt(0) || "U";
+    
+    return (
+      <div className="bg-white rounded-lg shadow-md overflow-hidden transition-all hover:shadow-lg mb-4">
+        {isEditing ? (
+          <div className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">שם מלא</label>
+                <input
+                  name="full_name"
+                  value={editData.full_name}
+                  onChange={handleEditChange}
+                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">ת"ז</label>
+                <input
+                  name="id_number"
+                  value={editData.id_number}
+                  onChange={handleEditChange}
+                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">טלפון</label>
+                <input
+                  name="phone_number"
+                  value={editData.phone_number}
+                  onChange={handleEditChange}
+                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">תפקיד</label>
+                <select
+                  name="role"
+                  value={editData.role}
+                  onChange={handleEditChange}
+                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+                >
                         <option value="student">סטודנט</option>
                         <option value="lecturer">מרצה</option>
                         <option value="admin">מזכירה</option>
                       </select>
-                    </td>
-                    <td className="px-4 py-2">
-                      <select name="department" value={editData.department} onChange={handleEditChange} className="w-full border rounded px-2 py-1 text-sm">
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">מחלקה</label>
+                <select
+                  name="department"
+                  value={editData.department}
+                  onChange={handleEditChange}
+                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+                >
                         {departments.map(d => (
                           <option key={d.id} value={d.id}>{d.name}</option>
                         ))}
                       </select>
-                    </td>
-                    <td className="px-4 py-2 text-center space-x-2">
-                      <button onClick={() => handleSaveClick(u.id)} className="px-3 py-1 bg-green-500 text-white rounded text-sm">שמור</button>
-                      <button onClick={handleCancelClick} className="px-3 py-1 bg-gray-400 text-white rounded text-sm">ביטול</button>
-                    </td>
-                  </>
-                ) : type === 'pending' ? (
-                  <>
-                    <td className="px-4 py-2 text-sm">{u.full_name}</td>
-                    <td className="px-4 py-2 text-sm">{u.email}</td>
-                    <td className="px-4 py-2 text-sm">{u.id_number}</td>
-                    <td className="px-4 py-2 text-sm">{u.phone_number}</td>
-                    <td className="px-4 py-2 text-sm">{roleLabels[u.role]}</td>
-                    <td className="px-4 py-2 text-sm">{departments.find(d => d.id === u.department)?.name}</td>
-                    <td className="px-4 py-2 text-center">
-                      <button onClick={() => handleApprove(u.id)} className="px-3 py-1 bg-green-500 text-white rounded text-sm">אשר</button>
-                    </td>
-                  </>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">אימייל</label>
+                <p className="p-2 bg-gray-50 rounded-lg">{user.email}</p>
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-2 rtl:space-x-reverse">
+              <button
+                onClick={handleCancelClick}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                ביטול
+              </button>
+              <button
+                onClick={() => handleSaveClick(user.id)}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                שמור שינויים
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col md:flex-row">
+            {/* Role indicator and avatar */}
+            <div className={`p-4 md:w-20 flex flex-row md:flex-col items-center justify-center ${roleColors[user.role]}`}>
+              <div className="bg-white h-10 w-10 rounded-full flex items-center justify-center font-bold text-lg shadow mb-0 md:mb-2">
+                {userInitial}
+              </div>
+              <div className="text-xs font-medium mr-2 md:mr-0 mt-0 md:mt-2">{roleLabels[user.role]}</div>
+            </div>
+            
+            {/* User content */}
+            <div className="flex-1 p-4">
+              <div className="flex flex-col md:flex-row justify-between">
+                <div>
+                  <h3 className="font-bold text-lg mb-1">{user.full_name}</h3>
+                  <div className="text-sm text-gray-600 mb-3">{user.email}</div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-2 text-sm">
+                    <div>
+                      <span className="text-gray-500">ת"ז:</span> {user.id_number}
+                    </div>
+                    <div>
+                      <span className="text-gray-500">טלפון:</span> {user.phone_number || '—'}
+                    </div>
+                    <div>
+                      <span className="text-gray-500">מחלקה:</span> {deptName}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-4 md:mt-0 flex flex-wrap gap-2 items-start">
+                  {isPending ? (
+                    <button
+                      onClick={() => handleApprove(user.id)}
+                      className="bg-green-600 hover:bg-green-700 text-white text-sm py-1 px-3 rounded-lg transition-colors"
+                    >
+                      אישור מרצה
+                    </button>
                 ) : (
                   <>
-                    <td className="px-4 py-2 text-sm">{u.full_name}</td>
-                    <td className="px-4 py-2 text-sm">{u.email}</td>
-                    <td className="px-4 py-2 text-sm">{u.id_number}</td>
-                    <td className="px-4 py-2 text-sm">{u.phone_number}</td>
-                    <td className="px-4 py-2 text-sm">{roleLabels[u.role]}</td>
-                    <td className="px-4 py-2 text-sm">{departments.find(d => d.id === u.department)?.name}</td>
-                    <td className="px-4 py-2 text-center">
-                      <div className="flex gap-2 justify-center flex-wrap">
-                        <button onClick={() => handleEditClick(u)} className="px-3 py-1 bg-blue-500 text-white rounded text-sm">ערוך</button>
-                        <button onClick={() => handleDeleteClick(u.id)} className="px-3 py-1 bg-red-500 text-white rounded text-sm">מחק</button>
-                        {u.role === 'lecturer' && (
-                          <button onClick={() => handleAssignCourses(u)} className="px-3 py-1 bg-yellow-500 text-white rounded text-sm">השמת קורסים</button>
+                      <button
+                        onClick={() => handleEditClick(user)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white text-sm py-1 px-3 rounded-lg transition-colors"
+                      >
+                        ערוך
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClick(user.id)}
+                        className="bg-red-600 hover:bg-red-700 text-white text-sm py-1 px-3 rounded-lg transition-colors"
+                      >
+                        מחק
+                      </button>
+                      {user.role === 'lecturer' && (
+                        <button
+                          onClick={() => handleAssignCourses(user)}
+                          className="bg-yellow-600 hover:bg-yellow-700 text-white text-sm py-1 px-3 rounded-lg transition-colors"
+                        >
+                          השמת קורסים
+                        </button>
+                      )}
+                    </>
                         )}
                       </div>
-                    </td>
-                  </>
+              </div>
+            </div>
+          </div>
                 )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
       </div>
-    </section>
   );
+  };
 
   return (
-    <div className="bg-gray-50 min-h-screen py-8">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold mb-6 text-center">ניהול משתמשים</h1>
-        {renderTable('סטודנטים', students, 'students')}
-        {renderTable('מרצים מאושרים', approvedLecturers, 'approved')}
-        {renderTable('מרצים ממתינים לאישור', pendingLecturers, 'pending')}
-
+    <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6">
+      {/* Header with gradient background */}
+      <div className="relative overflow-hidden bg-gradient-to-l from-blue-700 to-indigo-900 rounded-2xl shadow-xl mb-8">
+        <div className="absolute top-0 left-0 w-full h-full opacity-10">
+          <img src="/campus.png" alt="Campus" className="w-full h-full object-cover" />
+        </div>
+        <div className="relative p-8 md:p-10">
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">ניהול משתמשים</h1>
+          <p className="text-blue-100 max-w-2xl">
+            ניהול משתמשים במחלקת {currentDepartmentName}. כאן תוכל לצפות, לערוך ולנהל משתמשים במערכת.
+          </p>
+          
+          {/* Quick statistics */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4">
+              <div className="text-white text-sm opacity-80">סטודנטים</div>
+              <div className="text-white text-2xl font-bold">{students.length}</div>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4">
+              <div className="text-white text-sm opacity-80">מרצים מאושרים</div>
+              <div className="text-white text-2xl font-bold">{approvedLecturers.length}</div>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4">
+              <div className="text-white text-sm opacity-80">מרצים ממתינים</div>
+              <div className="text-white text-2xl font-bold">{pendingLecturers.length}</div>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4">
+              <div className="text-white text-sm opacity-80">אנשי מנהלה</div>
+              <div className="text-white text-2xl font-bold">{admins.length}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Main content */}
+      <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+        {/* Tabs and search */}
+        <div className="flex flex-col sm:flex-row justify-between mb-6">
+          <div className="flex space-x-1 rtl:space-x-reverse border rounded-lg p-1 bg-gray-50 text-sm mb-4 sm:mb-0">
+            <button
+              className={`py-2 px-4 rounded-md transition-colors font-medium ${activeTab === 'students' ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}`}
+              onClick={() => setActiveTab('students')}
+            >
+              סטודנטים ({students.length})
+            </button>
+            <button
+              className={`py-2 px-4 rounded-md transition-colors font-medium ${activeTab === 'lecturers' ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}`}
+              onClick={() => setActiveTab('lecturers')}
+            >
+              מרצים ({approvedLecturers.length})
+            </button>
+            <button
+              className={`py-2 px-4 rounded-md transition-colors font-medium ${activeTab === 'pending' ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}`}
+              onClick={() => setActiveTab('pending')}
+            >
+              ממתינים לאישור ({pendingLecturers.length})
+            </button>
+            <button
+              className={`py-2 px-4 rounded-md transition-colors font-medium ${activeTab === 'admins' ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}`}
+              onClick={() => setActiveTab('admins')}
+            >
+              מנהלה ({admins.length})
+            </button>
+          </div>
+          
+          <div className="relative">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="חיפוש לפי שם, אימייל או ת.ז..."
+              className="pl-4 pr-10 py-2 border rounded-lg w-full sm:w-64"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+        
+        {/* Users list */}
+        <div>
+          <h2 className="text-xl font-semibold text-gray-700 mb-4">
+            {activeTab === 'students' && 'סטודנטים'}
+            {activeTab === 'lecturers' && 'מרצים מאושרים'}
+            {activeTab === 'pending' && 'מרצים ממתינים לאישור'}
+            {activeTab === 'admins' && 'אנשי מנהלה'}
+          </h2>
+          
+          {activeUsers.length === 0 ? (
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <h3 className="text-lg font-medium text-gray-800 mb-2">לא נמצאו משתמשים</h3>
+              {searchTerm ? (
+                <p className="text-gray-600">לא נמצאו משתמשים התואמים את החיפוש שלך</p>
+              ) : (
+                <p className="text-gray-600">אין משתמשים בקטגוריה זו</p>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {activeUsers.map(user => (
+                <UserCard key={user.id} user={user} type={activeTab} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Course assignment modal */}
         {courseDialogUser && (
-          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-xl">
-              <h2 className="text-xl font-semibold mb-4">השמת קורסים עבור {courseDialogUser.full_name}</h2>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {courses.map(c => (
-                  <label key={c.id} className="block">
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white w-full max-w-xl rounded-xl shadow-2xl">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-800">השמת קורסים עבור {courseDialogUser.full_name}</h2>
+            </div>
+            
+            <div className="p-6">
+              <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-4 mb-6">
+                {courses.length === 0 ? (
+                  <p className="text-gray-500 text-center py-4">אין קורסים זמינים במחלקה זו</p>
+                ) : (
+                  <div className="space-y-2">
+                    {courses.map(course => (
+                      <label key={course.id} className="flex items-center p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
                     <input
                       type="checkbox"
-                      className="mr-2"
-                      checked={selectedCourses.includes(c.id)}
-                      onChange={() => handleCourseChange(c.id)}
-                    />
-                    {c.name}
+                          className="form-checkbox h-5 w-5 text-blue-600 ml-2"
+                          checked={selectedCourses.includes(course.id)}
+                          onChange={() => handleCourseChange(course.id)}
+                        />
+                        <span>{course.name}</span>
                   </label>
                 ))}
+                  </div>
+                )}
               </div>
-              <div className="flex justify-end gap-2 mt-4">
-                <button onClick={() => setCourseDialogUser(null)} className="px-4 py-2 bg-gray-400 text-white rounded">ביטול</button>
-                <button onClick={saveCourseAssignment} className="px-4 py-2 bg-green-600 text-white rounded">שמור</button>
+              
+              <div className="flex justify-end space-x-3 rtl:space-x-reverse">
+                <button
+                  onClick={() => setCourseDialogUser(null)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  ביטול
+                </button>
+                <button
+                  onClick={saveCourseAssignment}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  שמור שינויים
+                </button>
+              </div>
               </div>
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 }

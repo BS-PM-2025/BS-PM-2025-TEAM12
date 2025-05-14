@@ -464,7 +464,7 @@ export default function Register() {
           <img
             src="/campus.png"
             alt="Campus illustration"
-            className="object-cover w-full h-full"
+  className="object-cover w-full h-full"
           />
         </div>
       </section>

@@ -2,6 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 
+// Map roles to Hebrew labels
+const roleLabels = {
+  student: 'סטודנט',
+  lecturer: 'מרצה',
+  admin: 'מזכירה',
+};
+
 export default function Profile() {
   const [currentUser, setCurrentUser] = useState(null);
   const [departments, setDepartments] = useState([]);
@@ -19,28 +26,38 @@ export default function Profile() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [matchError, setMatchError] = useState('');
+  const [loading, setLoading] = useState(true);
 
   const hasUpper = str => /[A-Z]/.test(str);
   const hasLower = str => /[a-z]/.test(str);
 
   useEffect(() => {
-    fetch('http://localhost:8000/academics/api/departments/')
-      .then(res => res.json())
-      .then(data => setDepartments(data))
-      .catch(console.error);
-  }, []);
-
-  useEffect(() => {
-    const stored = localStorage.getItem('currentUser');
-    if (stored) {
-      const user = JSON.parse(stored);
-      setCurrentUser(user);
-      setEditedData({
-        full_name: user.full_name,
-        email: user.email,
-        phone_number: user.phone_number || ''
-      });
-    }
+    setLoading(true);
+    Promise.all([
+      fetch('http://localhost:8000/academics/api/departments/')
+        .then(res => res.json())
+        .catch(err => {
+          console.error("Error fetching departments:", err);
+          return [];
+        }),
+      
+      new Promise(resolve => {
+        const stored = localStorage.getItem('currentUser');
+        if (stored) {
+          const user = JSON.parse(stored);
+          setCurrentUser(user);
+          setEditedData({
+            full_name: user.full_name,
+            email: user.email,
+            phone_number: user.phone_number || ''
+          });
+        }
+        resolve();
+      })
+    ]).then(([deptData]) => {
+      setDepartments(deptData);
+      setLoading(false);
+    });
   }, []);
 
   const handleChange = e => {
@@ -125,119 +142,219 @@ export default function Profile() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-gray-600">טוען פרופיל...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!currentUser) {
     return (
-      <div className="flex justify-center items-center min-h-screen text-red-600 text-xl">
-        לא התחברת למערכת
+      <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <h2 className="text-xl font-semibold text-red-800 mb-2">לא התחברת למערכת</h2>
+          <p className="text-red-600">יש להתחבר למערכת כדי לצפות בפרופיל האישי</p>
+        </div>
       </div>
     );
   }
 
   const deptName = departments.find(d => d.id === currentUser.department)?.name || 'לא מוגדר';
+  const userInitial = currentUser.full_name?.charAt(0) || "U";
 
   return (
-    <div dir="rtl" className="p-6 relative">
+    <div dir="rtl" className="max-w-6xl mx-auto py-8 px-4 sm:px-6">
+      {/* Success Notification */}
       {showSuccessModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
-          <div className="bg-white dark:bg-gray-800 px-6 py-10 rounded-lg text-center max-w-lg w-full">
-            <p className="text-gray-800 dark:text-white">{successMessage}</p>
+          <div className="bg-white px-6 py-4 rounded-lg shadow-xl max-w-md w-full">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <svg className="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div className="mr-3">
+                <p className="text-gray-800 font-medium">{successMessage}</p>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      <div className="bg-white rounded-2xl shadow-xl overflow-hidden p-8 max-w-4xl mx-auto">
-        {/* פרטי משתמש */}
-        <div className="text-center sm:text-right space-y-4 w-full">
-          {isEditing ? (
-            <>
-              <div>
-                <label className="block mb-1 font-medium">שם מלא:</label>
-                <input
-                  name="full_name"
-                  value={editedData.full_name}
-                  onChange={handleChange}
-                  className="w-full border p-2 rounded text-right"
-                />
-              </div>
-              <div>
-                <label className="block mb-1 font-medium">אימייל:</label>
-                <input
-                  name="email"
-                  value={editedData.email}
-                  onChange={handleChange}
-                  className="w-full border p-2 rounded text-right"
-                />
-              </div>
-              <div>
-                <label className="block mb-1 font-medium">טלפון:</label>
-                <input
-                  name="phone_number"
-                  value={editedData.phone_number}
-                  onChange={handleChange}
-                  className="w-full border p-2 rounded text-right"
-                />
-              </div>
-              <button
-                onClick={saveChanges}
-                className="mt-4 px-5 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700"
-              >
-                שמור שינויים
-              </button>
-            </>
-          ) : (
-            <>
-              <h2 className="text-3xl font-extrabold text-gray-900 mb-1">
-                {currentUser.full_name}
-              </h2>
-              <p><strong>אימייל:</strong> {currentUser.email}</p>
-              <p><strong>טלפון:</strong> {currentUser.phone_number || 'לא זמין'}</p>
-              <p><strong>תפקיד:</strong> {currentUser.role}</p>
-              <p><strong>מחלקה:</strong> {deptName}</p>
-              <button
-                onClick={() => setIsEditing(true)}
-                className="mt-2 px-5 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
-              >
-                ערוך פרופיל
-              </button>
-            </>
-          )}
+      {/* Header with gradient background */}
+      <div className="relative overflow-hidden bg-gradient-to-l from-blue-700 to-indigo-900 rounded-2xl shadow-xl mb-8">
+        <div className="absolute top-0 left-0 w-full h-full opacity-10">
+          <img src="/campus.png" alt="Campus" className="w-full h-full object-cover" />
         </div>
+        <div className="relative p-8 md:p-10">
+          <div className="flex flex-col md:flex-row items-center md:items-start">
+            <div className="bg-white/20 backdrop-blur-sm h-24 w-24 rounded-full flex items-center justify-center text-white text-4xl font-bold shadow-lg mb-4 md:mb-0 md:ml-6">
+              {userInitial}
+            </div>
+            <div className="text-center md:text-right">
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{currentUser.full_name}</h1>
+              <p className="text-blue-100 mb-1">
+                <span className="opacity-80">תפקיד:</span> {roleLabels[currentUser.role] || currentUser.role}
+              </p>
+              <p className="text-blue-100">
+                <span className="opacity-80">מחלקה:</span> {deptName}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        {/* שינוי סיסמה */}
-        <div className="mt-10 border-t pt-6">
-          <h3 className="text-xl font-semibold mb-4">🔐 שינוי סיסמה</h3>
-          <div className="space-y-3 max-w-md ml-auto text-right">
-            <input
-              name="old_password"
-              type="password"
-              placeholder="סיסמה נוכחית"
-              value={passwordData.old_password}
-              onChange={handlePasswordInput}
-              className="w-full border p-2 rounded text-right"
-            />
-            <input
-              name="new_password"
-              type="password"
-              placeholder="סיסמה חדשה"
-              value={passwordData.new_password}
-              onChange={handlePasswordInput}
-              className="w-full border p-2 rounded text-right"
-            />
-            <input
-              name="confirm_password"
-              type="password"
-              placeholder="אימות סיסמה חדשה"
-              value={passwordData.confirm_password}
-              onChange={handlePasswordInput}
-              className="w-full border p-2 rounded text-right"
-            />
-            {matchError && <p className="text-red-500 text-sm">{matchError}</p>}
-            <button
-              onClick={handlePasswordChange}
-              className="mt-2 px-5 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
-            >
-              עדכן סיסמה
-            </button>
+      {/* Profile Card */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-xl shadow-md overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-gray-800">פרטים אישיים</h2>
+              {!isEditing && (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 px-4 rounded-lg transition-colors inline-flex items-center"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                  ערוך פרטים
+                </button>
+              )}
+            </div>
+            
+            <div className="p-6">
+              {isEditing ? (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">שם מלא</label>
+                    <input
+                      name="full_name"
+                      value={editedData.full_name}
+                      onChange={handleChange}
+                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">אימייל</label>
+                    <input
+                      name="email"
+                      value={editedData.email}
+                      onChange={handleChange}
+                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+                      type="email"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">מספר טלפון</label>
+                    <input
+                      name="phone_number"
+                      value={editedData.phone_number}
+                      onChange={handleChange}
+                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+                      type="tel"
+                    />
+                  </div>
+                  <div className="flex justify-end mt-6 space-x-3 space-x-reverse">
+                    <button
+                      onClick={() => setIsEditing(false)}
+                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      ביטול
+                    </button>
+                    <button
+                      onClick={saveChanges}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      שמור שינויים
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="text-sm text-gray-500 mb-1">שם מלא</div>
+                      <div className="font-medium">{currentUser.full_name}</div>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="text-sm text-gray-500 mb-1">אימייל</div>
+                      <div className="font-medium">{currentUser.email}</div>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="text-sm text-gray-500 mb-1">מספר טלפון</div>
+                      <div className="font-medium">{currentUser.phone_number || 'לא הוגדר'}</div>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="text-sm text-gray-500 mb-1">תפקיד</div>
+                      <div className="font-medium">{roleLabels[currentUser.role] || currentUser.role}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {/* Password Change Card */}
+        <div>
+          <div className="bg-white rounded-xl shadow-md overflow-hidden h-full">
+            <div className="px-6 py-4 border-b border-gray-100">
+              <h2 className="text-xl font-semibold text-gray-800">שינוי סיסמה</h2>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">סיסמה נוכחית</label>
+                  <input
+                    name="old_password"
+                    type="password"
+                    value={passwordData.old_password}
+                    onChange={handlePasswordInput}
+                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">סיסמה חדשה</label>
+                  <input
+                    name="new_password"
+                    type="password"
+                    value={passwordData.new_password}
+                    onChange={handlePasswordInput}
+                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">הסיסמה חייבת לכלול לפחות 6 תווים, אות גדולה ואות קטנה</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">אימות סיסמה חדשה</label>
+                  <input
+                    name="confirm_password"
+                    type="password"
+                    value={passwordData.confirm_password}
+                    onChange={handlePasswordInput}
+                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+                  />
+                  {matchError && (
+                    <p className="text-red-500 text-sm mt-1">{matchError}</p>
+                  )}
+                </div>
+                <button
+                  onClick={handlePasswordChange}
+                  className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg transition-colors"
+                >
+                  עדכן סיסמה
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

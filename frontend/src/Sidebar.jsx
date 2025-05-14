@@ -3,6 +3,13 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+// Map roles to Hebrew labels
+const roleLabels = {
+  student: 'סטודנט',
+  lecturer: 'מרצה',
+  admin: 'מזכירה',
+};
+
 export default function Sidebar() {
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
@@ -11,8 +18,8 @@ export default function Sidebar() {
 
   // ── here we pull the logged-in user out of localStorage ───────────────────────
   const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-  const role = currentUser.role;                                      // fixes “role is not defined”
-  const departmentId = currentUser.departmentId ?? currentUser.department; // fixes “departmentId is not defined”
+  const role = currentUser.role;                                      // fixes "role is not defined"
+  const departmentId = currentUser.departmentId ?? currentUser.department; // fixes "departmentId is not defined"
 
   const handleLogout = () => {
     localStorage.removeItem('currentUser');
