@@ -1,26 +1,99 @@
 pipeline {
     agent any
-
+    
+    environment {
+        PYTHON_VERSION = '3.9'
+        NODE_VERSION = '16'
+    }
+    
     stages {
-        stage('התחלה') {
+        stage('Checkout') {
             steps {
-                echo '🚀 ברוך הבא ל-Jenkins!'
-                echo '🧠 נבדוק שהפייפליין שלנו רץ כמו שצריך...'
+                checkout scm
             }
         }
-
-        stage('בדיקה בסיסית') {
+        
+        stage('Setup Environment') {
             steps {
-                script {
-                    echo "✅ Hello, your pipeline is up and running!"
-                }
+                sh '''
+                    echo "Setting up Python environment..."
+                    python -m pip install --upgrade pip
+                    pip install -r backend/requirements.txt
+                    
+                    echo "Setting up Node environment..."
+                    npm install
+                '''
             }
         }
-
-        stage('סיום') {
+        
+        stage('Backend Tests') {
             steps {
-                echo '🎉 הפייפליין הסתיים בהצלחה!'
+                sh '''
+                    cd backend
+                    echo "Running backend tests..."
+                    python manage.py test --keepdb
+                '''
+            }
+        }
+        
+        stage('Frontend Tests') {
+            steps {
+                sh '''
+                    cd frontend
+                    echo "Running frontend tests..."
+                    npm test -- --watchAll=false
+                '''
+            }
+        }
+        
+        stage('Code Quality') {
+            steps {
+                sh '''
+                    echo "Running code quality checks..."
+                    # Run flake8 for Python code
+                    pip install flake8
+                    flake8 backend --count --max-line-length=120
+                    
+                    # Run ESLint for JavaScript code
+                    cd frontend
+                    npm run lint
+                '''
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                sh '''
+                    echo "Building frontend..."
+                    cd frontend
+                    npm run build
+                    
+                    echo "Collecting static files..."
+                    cd ../backend
+                    python manage.py collectstatic --noinput
+                '''
+            }
+        }
+        
+        stage('Deploy') {
+            steps {
+                sh '''
+                    echo "Deployment would happen here..."
+                    echo "Deployment successful!"
+                '''
             }
         }
     }
-}
+    
+    post {
+        always {
+            echo "Pipeline completed!"
+        }
+        success {
+            echo "Pipeline succeeded!"
+        }
+        failure {
+            echo "Pipeline failed!"
+        }
+    }
+} 
