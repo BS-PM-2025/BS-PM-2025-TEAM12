@@ -12,10 +12,8 @@ pipeline {
             steps {
                 dir('BS-PM-2025-TEAM12/backend') {
                     sh '''
-                        python3 -m venv venv
-                        . venv/bin/activate
-                        pip install --upgrade pip
-                        pip install pytest coverage flake8
+                        pip3 install --user --upgrade pip
+                        pip3 install --user pytest coverage flake8
                     '''
                 }
             }
@@ -26,9 +24,8 @@ pipeline {
                 dir('BS-PM-2025-TEAM12/backend') {
                     catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
                         sh '''
-                            . venv/bin/activate
                             mkdir -p reports/lint
-                            flake8 . > reports/lint/flake8.txt || true
+                            ~/.local/bin/flake8 . > reports/lint/flake8.txt || true
                         '''
                     }
                 }
@@ -40,12 +37,11 @@ pipeline {
                 dir('BS-PM-2025-TEAM12/backend') {
                     catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
                         sh '''
-                            . venv/bin/activate
                             mkdir -p reports/tests
-                            coverage run --source=. -m pytest || true
-                            coverage xml -o reports/tests/coverage.xml
-                            coverage html -d reports/tests/htmlcov
-                            pytest --junitxml=reports/tests/test-results.xml || true
+                            ~/.local/bin/coverage run --source=. -m pytest || true
+                            ~/.local/bin/coverage xml -o reports/tests/coverage.xml
+                            ~/.local/bin/coverage html -d reports/tests/htmlcov
+                            ~/.local/bin/pytest --junitxml=reports/tests/test-results.xml || true
                         '''
                     }
                 }
