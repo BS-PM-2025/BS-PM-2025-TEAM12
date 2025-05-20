@@ -12,7 +12,7 @@ pipeline {
             steps {
                 sh '''
                     echo "Setting up environment..."
-                    sleep 30
+                    sleep 5
                 '''
             }
         }
@@ -24,7 +24,7 @@ pipeline {
                     mkdir -p reports/code-analysis
                     
                     # Create HTML report
-                    cat > reports/code-analysis/index.html << 'EOF'
+                    cat <<EOF > reports/code-analysis/index.html
                     <!DOCTYPE html>
                     <html>
                     <head>
@@ -64,10 +64,10 @@ pipeline {
                         </script>
                     </body>
                     </html>
-                    EOF
+EOF
                     
                     # Create XML report for Jenkins
-                    cat > reports/code-analysis/analysis.xml << 'EOF'
+                    cat <<EOF > reports/code-analysis/analysis.xml
                     <?xml version="1.0" encoding="UTF-8"?>
                     <analysis>
                         <metrics>
@@ -76,9 +76,9 @@ pipeline {
                             <quality>good</quality>
                         </metrics>
                     </analysis>
-                    EOF
+EOF
                     
-                    sleep 45
+                    sleep 5
                 '''
             }
         }
@@ -90,7 +90,7 @@ pipeline {
                     mkdir -p reports/tests
                     
                     # Create HTML report
-                    cat > reports/tests/index.html << 'EOF'
+                    cat <<EOF > reports/tests/index.html
                     <!DOCTYPE html>
                     <html>
                     <head>
@@ -127,10 +127,10 @@ pipeline {
                         </script>
                     </body>
                     </html>
-                    EOF
+EOF
                     
                     # Create JUnit XML report
-                    cat > reports/tests/test-results.xml << 'EOF'
+                    cat <<EOF > reports/tests/test-results.xml
                     <?xml version="1.0" encoding="UTF-8"?>
                     <testsuites>
                         <testsuite name="Unit Tests" tests="150" failures="0">
@@ -142,9 +142,9 @@ pipeline {
                             <testcase name="Integration2" classname="IntegrationClass"/>
                         </testsuite>
                     </testsuites>
-                    EOF
+EOF
                     
-                    sleep 60
+                    sleep 5
                 '''
             }
         }
@@ -156,7 +156,7 @@ pipeline {
                     mkdir -p reports/performance
                     
                     # Create HTML report
-                    cat > reports/performance/index.html << 'EOF'
+                    cat <<EOF > reports/performance/index.html
                     <!DOCTYPE html>
                     <html>
                     <head>
@@ -195,9 +195,9 @@ pipeline {
                         </script>
                     </body>
                     </html>
-                    EOF
+EOF
                     
-                    sleep 40
+                    sleep 5
                 '''
             }
         }
@@ -209,7 +209,7 @@ pipeline {
                     mkdir -p reports/security
                     
                     # Create HTML report
-                    cat > reports/security/index.html << 'EOF'
+                    cat <<EOF > reports/security/index.html
                     <!DOCTYPE html>
                     <html>
                     <head>
@@ -249,9 +249,9 @@ pipeline {
                         </script>
                     </body>
                     </html>
-                    EOF
+EOF
                     
-                    sleep 35
+                    sleep 5
                 '''
             }
         }
@@ -263,7 +263,7 @@ pipeline {
                     mkdir -p reports/build
                     
                     # Create HTML report
-                    cat > reports/build/index.html << 'EOF'
+                    cat <<EOF > reports/build/index.html
                     <!DOCTYPE html>
                     <html>
                     <head>
@@ -284,9 +284,9 @@ pipeline {
                         </div>
                     </body>
                     </html>
-                    EOF
+EOF
                     
-                    sleep 50
+                    sleep 5
                 '''
             }
         }
@@ -296,7 +296,17 @@ pipeline {
                 sh '''
                     echo "Deploying application..."
                     echo "Deployment successful!"
-                    sleep 30
+                    sleep 5
+                '''
+            }
+        }
+        
+        stage('Debug Reports') {
+            steps {
+                sh '''
+                    echo "Listing all report files for debug:"
+                    find reports
+                    ls -lR reports
                 '''
             }
         }
