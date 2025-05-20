@@ -8,8 +8,6 @@ export default function ManageRequests() {
   const [feedback, setFeedback] = useState('');
   const [comments, setComments] = useState([]);
   const [activeTab, setActiveTab] = useState('open');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
 
   const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
 
@@ -137,20 +135,7 @@ export default function ManageRequests() {
     open: requests.filter(r => r.status !== 'אושר' && r.status !== 'נדחה'),
     closed: requests.filter(r => r.status === 'אושר' || r.status === 'נדחה'),
   };
-
-  // פונקציות סינון וחיפוש
-  const filteredRequests = activeTab === 'open' ? grouped.open : grouped.closed;
-  
-  const searchedRequests = filteredRequests.filter(r => {
-    const matchesSearch = searchTerm === '' || 
-      r.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (r.description && r.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesStatus = filterStatus === 'all' || r.status === filterStatus;
-    
-    return matchesSearch && matchesStatus;
-  });
+  const shownRequests = activeTab === 'open' ? grouped.open : grouped.closed;
 
   // רנדור לשורת טבלה בעיצוב חדש
   const RequestRow = ({ request }) => (
@@ -286,48 +271,21 @@ export default function ManageRequests() {
               </button>
             </div>
           </div>
-          
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                placeholder="חיפוש..."
-                className="pl-4 pr-10 py-2 border rounded-lg w-full sm:w-64"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            
-            <select
-              className="border rounded-lg py-2 px-4"
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
-              <option value="all">כל הסטטוסים</option>
-              <option value="ממתין">ממתין</option>
-              <option value="בטיפול">בטיפול</option>
-              <option value="אושר">אושר</option>
-              <option value="נדחה">נדחה</option>
-            </select>
-          </div>
         </div>
         
         {/* רשימת הבקשות - עיצוב חדש */}
         <div>
-          {searchedRequests.length === 0 ? (
+          {shownRequests.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
               <h3 className="text-lg font-medium text-gray-800 mb-2">לא נמצאו בקשות</h3>
-              <p className="text-gray-600">לא נמצאו בקשות התואמות את הסינון שבחרת</p>
+              <p className="text-gray-600">לא נמצאו בקשות להצגה</p>
             </div>
           ) : (
             <div>
-              {searchedRequests.map((request) => (
+              {shownRequests.map((request) => (
                 <RequestRow key={request.id} request={request} />
               ))}
             </div>

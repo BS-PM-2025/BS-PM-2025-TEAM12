@@ -8,8 +8,6 @@ export default function MyRequests() {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
   const [activeTab, setActiveTab] = useState('open');
   const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
 
@@ -110,23 +108,11 @@ export default function MyRequests() {
     }
   };
 
-  // Filter requests by search term and status
   const grouped = {
     open: requests.filter(r => r.status === 'ממתין' || r.status === 'בטיפול'),
     closed: requests.filter(r => r.status === 'אושר' || r.status === 'נדחה'),
   };
-
-  const activeRequests = activeTab === 'open' ? grouped.open : grouped.closed;
-
-  const filteredRequests = activeRequests.filter(r => {
-    const matchesSearch = searchTerm === '' || 
-      r.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (r.description && r.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesStatus = filterStatus === 'all' || r.status === filterStatus;
-    
-    return matchesSearch && matchesStatus;
-  });
+  const shownRequests = activeTab === 'open' ? grouped.open : grouped.closed;
 
   // Get counts for statistics
   const getStatusCounts = () => {
@@ -253,106 +239,28 @@ export default function MyRequests() {
       </div>
       
       {/* Filtering and search section */}
-      <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-        <div className="flex flex-col sm:flex-row justify-between mb-6">
-          <div className="mb-4 sm:mb-0">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link to="/request" className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors inline-flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                הגש בקשה חדשה
-              </Link>
-              
-              <div className="flex space-x-1 rtl:space-x-reverse border rounded-lg p-1 bg-gray-50 text-sm">
-                <button
-                  className={`py-2 px-4 rounded-md transition-colors font-medium ${activeTab === 'open' ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}`}
-                  onClick={() => setActiveTab('open')}
-                >
-                  בקשות פתוחות ({grouped.open.length})
-                </button>
-                  <button
-                  className={`py-2 px-4 rounded-md transition-colors font-medium ${activeTab === 'closed' ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}`}
-                  onClick={() => setActiveTab('closed')}
-                  >
-                  בקשות שטופלו ({grouped.closed.length})
-                  </button>
-              </div>
-            </div>
+      {/* (Remove the search/filter UI block here) */}
+      
+      {/* Requests list with title */}
+      <div>
+        <h2 className="text-xl font-semibold text-gray-700 mb-4">
+          {activeTab === 'open' ? 'בקשות פתוחות' : 'בקשות שטופלו'}
+        </h2>
+        {shownRequests.length === 0 ? (
+          <div className="text-center py-12 bg-gray-50 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <h3 className="text-lg font-medium text-gray-800 mb-2">לא נמצאו בקשות</h3>
+            <p className="text-gray-600">לא נמצאו בקשות להצגה</p>
           </div>
-          
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                placeholder="חיפוש..."
-                className="pl-4 pr-10 py-2 border rounded-lg w-full sm:w-64"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            
-            <select
-              className="border rounded-lg py-2 px-4"
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
-              <option value="all">כל הסטטוסים</option>
-              {activeTab === 'open' ? (
-                <>
-                  <option value="ממתין">ממתין</option>
-                  <option value="בטיפול">בטיפול</option>
-                </>
-              ) : (
-                <>
-                  <option value="אושר">אושר</option>
-                  <option value="נדחה">נדחה</option>
-                </>
-              )}
-            </select>
+        ) : (
+          <div>
+            {shownRequests.map((request) => (
+              <RequestCard key={request.id} request={request} />
+            ))}
           </div>
-        </div>
-        
-        {/* Requests list with title */}
-        <div>
-          <h2 className="text-xl font-semibold text-gray-700 mb-4">
-            {activeTab === 'open' ? 'בקשות פתוחות' : 'בקשות שטופלו'}
-          </h2>
-          
-          {filteredRequests.length === 0 ? (
-            <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              <h3 className="text-lg font-medium text-gray-800 mb-2">לא נמצאו בקשות</h3>
-              {searchTerm || filterStatus !== 'all' ? (
-                <p className="text-gray-600">לא נמצאו בקשות התואמות את החיפוש שלך</p>
-              ) : (
-                <div>
-                  {activeTab === 'open' ? (
-                    <p className="text-gray-600 mb-4">אין לך בקשות פתוחות כרגע</p>
-                  ) : (
-                    <p className="text-gray-600 mb-4">אין בקשות שטופלו להצגה</p>
-                  )}
-                  {activeTab === 'open' && (
-                    <Link to="/request" className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors">
-                      הגש בקשה חדשה
-                    </Link>
-                  )}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div>
-              {filteredRequests.map((request) => (
-                <RequestCard key={request.id} request={request} />
-              ))}
-            </div>
-          )}
-        </div>
+        )}
       </div>
       
       {/* Request details modal */}
