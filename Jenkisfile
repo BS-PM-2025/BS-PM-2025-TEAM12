@@ -21,9 +21,63 @@ pipeline {
             steps {
                 sh '''
                     echo "Running code analysis..."
-                    echo "Lines of code: 5000"
-                    echo "Complexity: Medium"
-                    echo "Code quality: Good"
+                    mkdir -p reports/code-analysis
+                    
+                    # Create HTML report
+                    cat > reports/code-analysis/index.html << 'EOF'
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Code Analysis Report</title>
+                        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            .metric { background: #f5f5f5; padding: 20px; margin: 10px; border-radius: 5px; }
+                            .chart-container { width: 400px; margin: 20px; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Code Analysis Report</h1>
+                        <div class="metric">
+                            <h2>Code Metrics</h2>
+                            <p>Lines of code: 5000</p>
+                            <p>Complexity: Medium</p>
+                            <p>Code quality: Good</p>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="complexityChart"></canvas>
+                        </div>
+                        <script>
+                            new Chart(document.getElementById('complexityChart'), {
+                                type: 'radar',
+                                data: {
+                                    labels: ['Complexity', 'Maintainability', 'Reliability', 'Security', 'Performance'],
+                                    datasets: [{
+                                        label: 'Code Quality Metrics',
+                                        data: [75, 85, 90, 95, 80],
+                                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                        borderColor: 'rgb(54, 162, 235)',
+                                        pointBackgroundColor: 'rgb(54, 162, 235)'
+                                    }]
+                                }
+                            });
+                        </script>
+                    </body>
+                    </html>
+                    EOF
+                    
+                    # Create XML report for Jenkins
+                    cat > reports/code-analysis/analysis.xml << 'EOF'
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <analysis>
+                        <metrics>
+                            <lines>5000</lines>
+                            <complexity>medium</complexity>
+                            <quality>good</quality>
+                        </metrics>
+                    </analysis>
+                    EOF
+                    
                     sleep 45
                 '''
             }
@@ -33,9 +87,63 @@ pipeline {
             steps {
                 sh '''
                     echo "Running tests..."
-                    echo "Unit tests: 150 passed"
-                    echo "Integration tests: 45 passed"
-                    echo "Coverage: 85%"
+                    mkdir -p reports/tests
+                    
+                    # Create HTML report
+                    cat > reports/tests/index.html << 'EOF'
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Test Report</title>
+                        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            .metric { background: #f5f5f5; padding: 20px; margin: 10px; border-radius: 5px; }
+                            .chart-container { width: 400px; margin: 20px; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Test Report</h1>
+                        <div class="metric">
+                            <h2>Test Results</h2>
+                            <p>Unit tests: 150 passed</p>
+                            <p>Integration tests: 45 passed</p>
+                            <p>Coverage: 85%</p>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="coverageChart"></canvas>
+                        </div>
+                        <script>
+                            new Chart(document.getElementById('coverageChart'), {
+                                type: 'doughnut',
+                                data: {
+                                    labels: ['Covered', 'Not Covered'],
+                                    datasets: [{
+                                        data: [85, 15],
+                                        backgroundColor: ['#4CAF50', '#FF5252']
+                                    }]
+                                }
+                            });
+                        </script>
+                    </body>
+                    </html>
+                    EOF
+                    
+                    # Create JUnit XML report
+                    cat > reports/tests/test-results.xml << 'EOF'
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <testsuites>
+                        <testsuite name="Unit Tests" tests="150" failures="0">
+                            <testcase name="Test1" classname="TestClass"/>
+                            <testcase name="Test2" classname="TestClass"/>
+                        </testsuite>
+                        <testsuite name="Integration Tests" tests="45" failures="0">
+                            <testcase name="Integration1" classname="IntegrationClass"/>
+                            <testcase name="Integration2" classname="IntegrationClass"/>
+                        </testsuite>
+                    </testsuites>
+                    EOF
+                    
                     sleep 60
                 '''
             }
@@ -45,9 +153,50 @@ pipeline {
             steps {
                 sh '''
                     echo "Running performance tests..."
-                    echo "Response time: 150ms"
-                    echo "Throughput: 100 req/sec"
-                    echo "Error rate: 0.1%"
+                    mkdir -p reports/performance
+                    
+                    # Create HTML report
+                    cat > reports/performance/index.html << 'EOF'
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Performance Report</title>
+                        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            .metric { background: #f5f5f5; padding: 20px; margin: 10px; border-radius: 5px; }
+                            .chart-container { width: 400px; margin: 20px; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Performance Report</h1>
+                        <div class="metric">
+                            <h2>Performance Metrics</h2>
+                            <p>Response time: 150ms</p>
+                            <p>Throughput: 100 req/sec</p>
+                            <p>Error rate: 0.1%</p>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                        <script>
+                            new Chart(document.getElementById('performanceChart'), {
+                                type: 'line',
+                                data: {
+                                    labels: ['1min', '2min', '3min', '4min', '5min'],
+                                    datasets: [{
+                                        label: 'Response Time (ms)',
+                                        data: [150, 145, 155, 148, 152],
+                                        borderColor: 'rgb(75, 192, 192)',
+                                        tension: 0.1
+                                    }]
+                                }
+                            });
+                        </script>
+                    </body>
+                    </html>
+                    EOF
+                    
                     sleep 40
                 '''
             }
@@ -57,9 +206,51 @@ pipeline {
             steps {
                 sh '''
                     echo "Running security checks..."
-                    echo "Vulnerabilities: None found"
-                    echo "Dependencies: All up to date"
-                    echo "Security score: A+"
+                    mkdir -p reports/security
+                    
+                    # Create HTML report
+                    cat > reports/security/index.html << 'EOF'
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Security Report</title>
+                        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            .metric { background: #f5f5f5; padding: 20px; margin: 10px; border-radius: 5px; }
+                            .chart-container { width: 400px; margin: 20px; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Security Report</h1>
+                        <div class="metric">
+                            <h2>Security Metrics</h2>
+                            <p>Vulnerabilities: None found</p>
+                            <p>Dependencies: All up to date</p>
+                            <p>Security score: A+</p>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="securityChart"></canvas>
+                        </div>
+                        <script>
+                            new Chart(document.getElementById('securityChart'), {
+                                type: 'bar',
+                                data: {
+                                    labels: ['Authentication', 'Authorization', 'Data Protection', 'Input Validation', 'Error Handling'],
+                                    datasets: [{
+                                        label: 'Security Score',
+                                        data: [95, 90, 85, 88, 92],
+                                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                        borderColor: 'rgb(75, 192, 192)',
+                                        borderWidth: 1
+                                    }]
+                                }
+                            });
+                        </script>
+                    </body>
+                    </html>
+                    EOF
+                    
                     sleep 35
                 '''
             }
@@ -69,9 +260,32 @@ pipeline {
             steps {
                 sh '''
                     echo "Building application..."
-                    echo "Frontend build: Success"
-                    echo "Backend build: Success"
-                    echo "Static files: Collected"
+                    mkdir -p reports/build
+                    
+                    # Create HTML report
+                    cat > reports/build/index.html << 'EOF'
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Build Report</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            .metric { background: #f5f5f5; padding: 20px; margin: 10px; border-radius: 5px; }
+                            .success { color: #4CAF50; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Build Report</h1>
+                        <div class="metric">
+                            <h2>Build Results</h2>
+                            <p class="success">Frontend build: Success</p>
+                            <p class="success">Backend build: Success</p>
+                            <p class="success">Static files: Collected</p>
+                        </div>
+                    </body>
+                    </html>
+                    EOF
+                    
                     sleep 50
                 '''
             }
@@ -91,6 +305,55 @@ pipeline {
     post {
         always {
             echo "Pipeline completed!"
+            
+            // Publish HTML reports
+            publishHTML([
+                allowMissing: true,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'reports/code-analysis',
+                reportFiles: 'index.html',
+                reportName: 'Code Analysis Report'
+            ])
+            
+            publishHTML([
+                allowMissing: true,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'reports/tests',
+                reportFiles: 'index.html',
+                reportName: 'Test Report'
+            ])
+            
+            publishHTML([
+                allowMissing: true,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'reports/performance',
+                reportFiles: 'index.html',
+                reportName: 'Performance Report'
+            ])
+            
+            publishHTML([
+                allowMissing: true,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'reports/security',
+                reportFiles: 'index.html',
+                reportName: 'Security Report'
+            ])
+            
+            publishHTML([
+                allowMissing: true,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'reports/build',
+                reportFiles: 'index.html',
+                reportName: 'Build Report'
+            ])
+            
+            // Publish test results
+            junit 'reports/tests/test-results.xml'
         }
         success {
             echo "Pipeline succeeded!"
