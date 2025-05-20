@@ -37,11 +37,12 @@ pipeline {
                 dir('BS-PM-2025-TEAM12/backend') {
                     catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
                         sh '''
+                            export PYTHONPATH=$PYTHONPATH:$(pwd)
                             mkdir -p reports/tests
-                            ~/.local/bin/coverage run --source=. -m pytest --ds=backend_project.settings || true
+                            export PYTHONPATH=$PYTHONPATH:$(pwd) && ~/.local/bin/coverage run --source=. -m pytest --ds=backend_project.settings || true
                             ~/.local/bin/coverage xml -o reports/tests/coverage.xml
                             ~/.local/bin/coverage html -d reports/tests/htmlcov
-                            ~/.local/bin/pytest --ds=backend_project.settings --junitxml=reports/tests/test-results.xml || true
+                            export PYTHONPATH=$PYTHONPATH:$(pwd) && ~/.local/bin/pytest --ds=backend_project.settings --junitxml=reports/tests/test-results.xml || true
                         '''
                     }
                 }
