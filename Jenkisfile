@@ -12,7 +12,7 @@ pipeline {
             steps {
                 sh '''
                     echo "Setting up environment..."
-                    sleep 5
+                    sleep 40
                 '''
             }
         }
@@ -62,7 +62,7 @@ pipeline {
                     </body>
                     </html>
 EOF
-                    sleep 5
+                    sleep 70
                 '''
             }
         }
@@ -109,7 +109,7 @@ EOF
                     </body>
                     </html>
 EOF
-                    sleep 5
+                    sleep 110
                 '''
             }
         }
@@ -158,7 +158,7 @@ EOF
                     </body>
                     </html>
 EOF
-                    sleep 5
+                    sleep 80
                 '''
             }
         }
@@ -208,7 +208,7 @@ EOF
                     </body>
                     </html>
 EOF
-                    sleep 5
+                    sleep 70
                 '''
             }
         }
@@ -239,7 +239,7 @@ EOF
                     </body>
                     </html>
 EOF
-                    sleep 5
+                    sleep 90
                 '''
             }
         }
@@ -249,7 +249,7 @@ EOF
                 sh '''
                     echo "Deploying application..."
                     echo "Deployment successful!"
-                    sleep 5
+                    sleep 40
                 '''
             }
         }
