@@ -2,25 +2,79 @@ pipeline {
     agent any
 
     stages {
-        stage('התחלה') {
+        stage('Checkout') {
             steps {
-                echo '🚀 ברוך הבא ל-Jenkins!'
-                echo '🧠 נבדוק שהפייפליין שלנו רץ כמו שצריך...'
+                checkout scm
             }
         }
 
-        stage('בדיקה בסיסית') {
+        stage('Setup') {
             steps {
-                script {
-                    echo "✅ Hello, your pipeline is up and running!"
+                dir('BS-PM-2025-TEAM12/backend') {
+                    sh '''
+                        pip3 install --user --upgrade pip
+                        pip3 install --user pytest coverage flake8 pytest-django
+                    '''
                 }
             }
         }
 
-        stage('סיום') {
+        stage('Lint') {
             steps {
-                echo '🎉 הפייפליין הסתיים בהצלחה!'
+                dir('BS-PM-2025-TEAM12/backend') {
+                    catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                        sh '''
+                            mkdir -p reports/lint
+                            ~/.local/bin/flake8 . > reports/lint/flake8.txt || true
+                        '''
+                    }
+                }
             }
+        }
+
+        stage('Tests & Coverage') {
+            steps {
+                dir('BS-PM-2025-TEAM12/backend') {
+                    catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                        sh '''
+                            mkdir -p reports/tests
+                            ~/.local/bin/coverage run --source=. -m pytest --ds=backend_project.settings || true
+                            ~/.local/bin/coverage xml -o reports/tests/coverage.xml
+                            ~/.local/bin/coverage html -d reports/tests/htmlcov
+                            ~/.local/bin/pytest --ds=backend_project.settings --junitxml=reports/tests/test-results.xml || true
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Debug Reports') {
+            steps {
+                dir('BS-PM-2025-TEAM12/backend') {
+                    sh '''
+                        echo "Listing all report files for debug:"
+                        find reports
+                        ls -lR reports
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Pipeline completed!"
+            archiveArtifacts artifacts: 'BS-PM-2025-TEAM12/backend/reports/**/*', allowEmptyArchive: true
+            junit 'BS-PM-2025-TEAM12/backend/reports/tests/test-results.xml'
+        }
+        success {
+            echo "Pipeline succeeded!"
+        }
+        unstable {
+            echo "Pipeline unstable (some tests/lint failed)!"
+        }
+        failure {
+            echo "Pipeline failed!"
         }
     }
 }
