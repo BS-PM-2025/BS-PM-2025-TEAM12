@@ -306,51 +306,8 @@ pipeline {
         always {
             echo "Pipeline completed!"
             
-            // Publish HTML reports
-            publishHTML([
-                allowMissing: true,
-                alwaysLinkToLastBuild: true,
-                keepAll: true,
-                reportDir: 'reports/code-analysis',
-                reportFiles: 'index.html',
-                reportName: 'Code Analysis Report'
-            ])
-            
-            publishHTML([
-                allowMissing: true,
-                alwaysLinkToLastBuild: true,
-                keepAll: true,
-                reportDir: 'reports/tests',
-                reportFiles: 'index.html',
-                reportName: 'Test Report'
-            ])
-            
-            publishHTML([
-                allowMissing: true,
-                alwaysLinkToLastBuild: true,
-                keepAll: true,
-                reportDir: 'reports/performance',
-                reportFiles: 'index.html',
-                reportName: 'Performance Report'
-            ])
-            
-            publishHTML([
-                allowMissing: true,
-                alwaysLinkToLastBuild: true,
-                keepAll: true,
-                reportDir: 'reports/security',
-                reportFiles: 'index.html',
-                reportName: 'Security Report'
-            ])
-            
-            publishHTML([
-                allowMissing: true,
-                alwaysLinkToLastBuild: true,
-                keepAll: true,
-                reportDir: 'reports/build',
-                reportFiles: 'index.html',
-                reportName: 'Build Report'
-            ])
+            // Archive all reports
+            archiveArtifacts artifacts: 'reports/**/*', allowEmptyArchive: true
             
             // Publish test results
             junit 'reports/tests/test-results.xml'
