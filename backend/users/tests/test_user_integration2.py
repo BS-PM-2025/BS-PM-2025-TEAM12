@@ -425,3 +425,354 @@ class UserIntegrationTests(TestCase):
         # Verify user was created but name should be sanitized in the UI
         user = User.objects.get(email="xss@example.com")
         self.assertEqual(user.full_name, "<script>alert('XSS')</script>")  # Django stores it as-is 
+
+    def test_login_attempt_with_sql_injection(self):
+        """Test that SQL injection in login attempt is handled properly"""
+        data = {
+            "email": "admin@example.com' OR '1'='1",
+            "password": "anything"
+        }
+        response = self.client.post(self.login_url, data, content_type="application/json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    
+    def test_registration_with_xss_attempt(self):
+        """Test that XSS in registration form is handled properly"""
+        data = {
+            "full_name": "<script>alert('XSS')</script>",
+            "email": "xss@example.com",
+            "password": "Password1",
+            "id_number": "987654321",
+            "role": "student"
+        }
+        response = self.client.post(self.register_url, data, content_type="application/json")
+        # Registration should succeed, but data should be sanitized
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        user = User.objects.get(email="xss@example.com")
+        self.assertNotEqual(user.full_name, "<script>alert('XSS')</script>")
+    
+    # 10 additional integration tests
+    
+    def test_lecturer_approval_flow(self):
+        """Test the complete flow of lecturer approval"""
+        # Create an unapproved lecturer
+        unapproved_lecturer = User.objects.create(
+            full_name="Unapproved Lecturer",
+            email="unapproved@example.com",
+            id_number="111111111",
+            role="lecturer",
+            password=make_password("LecturerPass1"),
+            department=self.department,
+            is_approved=False
+        )
+        
+        # Check that unapproved lecturer exists
+        self.assertFalse(User.objects.get(email="unapproved@example.com").is_approved)
+        
+        # Admin approves the lecturer
+        response = self.client.put(
+            self.update_user_url(unapproved_lecturer.id),
+            {"is_approved": True},
+            content_type="application/json"
+        )
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Verify lecturer is now approved
+        self.assertTrue(User.objects.get(email="unapproved@example.com").is_approved)
+    
+    def test_cascading_course_deletion(self):
+        """Test that when a course is deleted, it's removed from lecturer assignments"""
+        # Assign courses to lecturer
+        self.client.put(
+            self.assign_courses_url(self.lecturer.id),
+            {"course_ids": [self.course1.id, self.course2.id]},
+            content_type="application/json"
+        )
+        
+        # Verify courses are assigned
+        updated_lecturer = User.objects.get(id=self.lecturer.id)
+        self.assertEqual(updated_lecturer.courses.count(), 2)
+        
+        # Delete a course
+        self.course1.delete()
+        
+        # Verify it's removed from lecturer's courses
+        updated_lecturer = User.objects.get(id=self.lecturer.id)
+        self.assertEqual(updated_lecturer.courses.count(), 1)
+        self.assertEqual(updated_lecturer.courses.first(), self.course2)
+    
+    def test_user_department_transfer(self):
+        """Test moving a user from one department to another"""
+        # Create a new department
+        new_department = Department.objects.create(
+            name="New Department"
+        )
+        
+        # Transfer student to new department
+        response = self.client.put(
+            self.update_user_url(self.student.id),
+            {"department": new_department.id},
+            content_type="application/json"
+        )
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Verify student is now in the new department
+        updated_student = User.objects.get(id=self.student.id)
+        self.assertEqual(updated_student.department, new_department)
+    
+    def test_sequential_password_reset_tokens(self):
+        """Test that requesting password reset multiple times updates the token"""
+        # Initial password reset request
+        data = {"email": "student@example.com"}
+        self.client.post(self.forgot_url, data, content_type="application/json")
+        
+        # Get the first token
+        user = User.objects.get(email="student@example.com")
+        first_token = user.reset_token
+        
+        # Request password reset again
+        self.client.post(self.forgot_url, data, content_type="application/json")
+        
+        # Get the second token
+        user = User.objects.get(email="student@example.com")
+        second_token = user.reset_token
+        
+        # Verify tokens are different
+        self.assertNotEqual(first_token, second_token)
+        
+        # Try to use the old token (should fail)
+        response = self.client.post(
+            self.reset_password_url(user.id, first_token),
+            {"password": "NewPassword1", "confirm": "NewPassword1"},
+            content_type="application/json"
+        )
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        
+        # Use the new token (should work)
+        response = self.client.post(
+            self.reset_password_url(user.id, second_token),
+            {"password": "NewPassword1", "confirm": "NewPassword1"},
+            content_type="application/json"
+        )
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    def test_password_complexity_requirements(self):
+        """Test that password complexity requirements are enforced"""
+        # Test simple password (no number)
+        response = self.client.post(
+            self.register_url,
+            {
+                "full_name": "Password Test",
+                "email": "password@example.com",
+                "id_number": "123123123",
+                "password": "simplepassword",
+                "role": "student"
+            },
+            content_type="application/json"
+        )
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        
+        # Test password with number (should work)
+        response = self.client.post(
+            self.register_url,
+            {
+                "full_name": "Password Test",
+                "email": "password@example.com",
+                "id_number": "123123123",
+                "password": "Password123",
+                "role": "student"
+            },
+            content_type="application/json"
+        )
+        
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+    
+    def test_login_lockout_after_failed_attempts(self):
+        """Test that accounts are temporarily locked after multiple failed login attempts"""
+        # Try to login with wrong password 5 times
+        for _ in range(5):
+            self.client.post(
+                self.login_url,
+                {
+                    "email": "student@example.com",
+                    "password": "WrongPassword123"
+                },
+                content_type="application/json"
+            )
+        
+        # Try to login with correct password (should be locked)
+        response = self.client.post(
+            self.login_url,
+            {
+                "email": "student@example.com",
+                "password": "StudentPass1"
+            },
+            content_type="application/json"
+        )
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn("account temporarily locked", response.data.get("message", "").lower())
+    
+    def test_id_number_uniqueness(self):
+        """Test that ID numbers must be unique across users"""
+        # Try to register a user with an existing ID number
+        response = self.client.post(
+            self.register_url,
+            {
+                "full_name": "Duplicate ID",
+                "email": "unique@example.com",
+                "id_number": "123456789",  # Same as self.student
+                "password": "Password123",
+                "role": "student"
+            },
+            content_type="application/json"
+        )
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("id_number", str(response.data).lower())
+    
+    def test_user_search_by_name_and_id(self):
+        """Test searching for users by name and ID number"""
+        # Create users with specific search-friendly names
+        User.objects.create(
+            full_name="John Searchable",
+            email="john@example.com",
+            id_number="111222333",
+            role="student",
+            password=make_password("Password123"),
+            department=self.department
+        )
+        
+        User.objects.create(
+            full_name="Jane Searchable",
+            email="jane@example.com",
+            id_number="333222111",
+            role="student",
+            password=make_password("Password123"),
+            department=self.department
+        )
+        
+        # Search by name "Searchable"
+        response = self.client.get(f"{self.users_by_dept_url}?search=Searchable")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        
+        # Search by ID number "333222"
+        response = self.client.get(f"{self.users_by_dept_url}?search=333222")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['id_number'], "333222111")
+    
+    def test_user_role_change_impact(self):
+        """Test changing a user's role and its impact on the system"""
+        # Change a student to a lecturer
+        response = self.client.put(
+            self.update_user_url(self.student.id),
+            {"role": "lecturer"},
+            content_type="application/json"
+        )
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Verify the role was changed
+        updated_user = User.objects.get(id=self.student.id)
+        self.assertEqual(updated_user.role, "lecturer")
+        
+        # Verify new lecturer is not approved by default
+        self.assertFalse(updated_user.is_approved)
+        
+        # Now change a lecturer to an admin
+        response = self.client.put(
+            self.update_user_url(self.lecturer.id),
+            {"role": "admin"},
+            content_type="application/json"
+        )
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Verify the role was changed
+        updated_user = User.objects.get(id=self.lecturer.id)
+        self.assertEqual(updated_user.role, "admin")
+        
+        # Lecturer courses should be cleared when becoming admin
+        self.assertEqual(updated_user.courses.count(), 0)
+    
+    def test_full_user_lifecycle(self):
+        """Test the complete lifecycle of a user from registration to deletion"""
+        # 1. Register a new user
+        register_data = {
+            "full_name": "Lifecycle Test",
+            "email": "lifecycle@example.com",
+            "id_number": "999888777",
+            "password": "Lifecycle123",
+            "role": "student",
+            "department": self.department.id
+        }
+        
+        register_response = self.client.post(
+            self.register_url, 
+            register_data, 
+            content_type="application/json"
+        )
+        
+        self.assertEqual(register_response.status_code, status.HTTP_201_CREATED)
+        user_id = register_response.data['id']
+        
+        # 2. Login with the new user
+        login_response = self.client.post(
+            self.login_url,
+            {
+                "email": "lifecycle@example.com",
+                "password": "Lifecycle123"
+            },
+            content_type="application/json"
+        )
+        
+        self.assertEqual(login_response.status_code, status.HTTP_200_OK)
+        
+        # 3. Update user information
+        update_response = self.client.put(
+            self.update_user_url(user_id),
+            {
+                "full_name": "Updated Lifecycle",
+                "phone_number": "050-9999999"
+            },
+            content_type="application/json"
+        )
+        
+        self.assertEqual(update_response.status_code, status.HTTP_200_OK)
+        
+        # 4. Change password
+        change_pwd_response = self.client.put(
+            self.change_password_url(user_id),
+            {
+                "old_password": "Lifecycle123",
+                "new_password": "NewLifecycle123"
+            },
+            content_type="application/json"
+        )
+        
+        self.assertEqual(change_pwd_response.status_code, status.HTTP_200_OK)
+        
+        # 5. Login with new password
+        new_login_response = self.client.post(
+            self.login_url,
+            {
+                "email": "lifecycle@example.com",
+                "password": "NewLifecycle123"
+            },
+            content_type="application/json"
+        )
+        
+        self.assertEqual(new_login_response.status_code, status.HTTP_200_OK)
+        
+        # 6. Delete the user
+        delete_response = self.client.delete(self.delete_user_url(user_id))
+        self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
+        
+        # 7. Verify user is deleted
+        self.assertFalse(User.objects.filter(email="lifecycle@example.com").exists()) 
