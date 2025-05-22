@@ -89,7 +89,7 @@ export default function MilitaryForm() {
         </div>
         <div className="relative p-8 md:p-10">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">בקשת מילואים</h1>
-          <p className="text-green-100 text-lg font-semibold max-w-2xl">
+          <p className="text-gray-900 text-lg font-semibold max-w-2xl">
             טופס זה מיועד לבקשות הקשורות לשירות מילואים. יש למלא את הפרטים ולצרף את צו המילואים במידת האפשר.
           </p>
           
