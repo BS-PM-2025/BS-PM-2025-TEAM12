@@ -34,7 +34,7 @@ export default function Profile() {
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      fetch('http://localhost:8000/academics/api/departments/')
+      fetch('http://localhost:8000/api/academics/departments/')
         .then(res => res.json())
         .catch(err => {
           console.error("Error fetching departments:", err);

@@ -31,7 +31,7 @@ class RegisterAPIView(APIView):
         user = serializer.save()
         send_mail(
             subject='הרשמה בוצעה בהצלחה',
-            message=f"שלום {user.full_name}, ההרשמה הושלמה!",
+            message=f"שלום {user.get_full_name()}, ההרשמה הושלמה!",
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[user.email],
             fail_silently=False
@@ -65,12 +65,12 @@ class LoginAPIView(APIView):
         return Response({
             'message': 'התחברת בהצלחה!',
             'id': user.id,
-            'full_name': user.full_name,
+            'full_name': user.get_full_name(),
             'email': user.email,
             'role': user.role,
             'department': user.department.id if user.department else None,
             'phone_number': user.phone_number,
-            'registration_date': user.registration_date,
+            'registration_date': user.date_joined,
         }, status=status.HTTP_200_OK)
 
 

@@ -1,6 +1,6 @@
 // src/UserManagement/UserManagementPage.jsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 
@@ -36,6 +36,9 @@ export default function UserManagementPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('students');
 
+  // Create a ref to keep track of active input element
+  const activeInputRef = useRef(null);
+
   const fetchUsers = async () => {
     try {
       const res = await axios.get(`http://localhost:8000/api/users/department/${departmentId}/`);
@@ -68,19 +71,58 @@ export default function UserManagementPage() {
   }, [departmentId]);
 
   const handleEditClick = u => {
+    // ניקוי קודם של ה-editData למניעת בעיות
+    setEditData({});
+    
+    // הגדרת ה-ID לעריכה
     setEditingId(u.id);
-    setEditData({
-      full_name: u.full_name,
-      id_number: u.id_number,
-      phone_number: u.phone_number || '',
-      role: u.role,
-      department: u.department,
-    });
+    
+    // עיכוב קצר לאפשר לקומפוננטה להתרנדר מחדש
+    setTimeout(() => {
+      console.log('Setting edit data for user:', u);
+      // פיצול שם מלא לשם פרטי ושם משפחה
+      const nameParts = (u.full_name || '').split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      
+      setEditData({
+        first_name: u.first_name || firstName,
+        last_name: u.last_name || lastName,
+        id_number: u.id_number || '',
+        phone_number: u.phone_number || '',
+        role: u.role || 'student',
+        department: u.department || '',
+      });
+    }, 50);
   };
 
   const handleEditChange = e => {
     const { name, value } = e.target;
-    setEditData(prev => ({ ...prev, [name]: value }));
+    console.log(`Editing field ${name} with value: ${value}`);
+    
+    // Save the active element before state update
+    activeInputRef.current = e.target;
+    const selectionStart = e.target.selectionStart;
+    const selectionEnd = e.target.selectionEnd;
+    
+    setEditData(prevData => {
+      const newData = { ...prevData, [name]: value };
+      console.log('New edit data:', newData);
+      return newData;
+    });
+    
+    // Use requestAnimationFrame to restore focus after render
+    requestAnimationFrame(() => {
+      if (activeInputRef.current) {
+        activeInputRef.current.focus();
+        try {
+          // Restore cursor position
+          activeInputRef.current.setSelectionRange(selectionStart, selectionEnd);
+        } catch (err) {
+          console.log('Could not restore selection', err);
+        }
+      }
+    });
   };
 
   const handleSaveClick = async id => {
@@ -209,30 +251,49 @@ export default function UserManagementPage() {
           <div className="p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">שם מלא</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">שם פרטי</label>
                 <input
-                  name="full_name"
-                  value={editData.full_name}
+                  name="first_name"
+                  value={editData.first_name || ''}
                   onChange={handleEditChange}
                   className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+                  dir="rtl"
+                  lang="he"
+                  autoComplete="off"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">שם משפחה</label>
+                <input
+                  name="last_name"
+                  value={editData.last_name || ''}
+                  onChange={handleEditChange}
+                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+                  dir="rtl"
+                  lang="he"
+                  autoComplete="off"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">ת"ז</label>
                 <input
                   name="id_number"
-                  value={editData.id_number}
+                  value={editData.id_number || ''}
                   onChange={handleEditChange}
                   className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+                  dir="rtl"
+                  autoComplete="off"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">טלפון</label>
                 <input
                   name="phone_number"
-                  value={editData.phone_number}
+                  value={editData.phone_number || ''}
                   onChange={handleEditChange}
                   className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+                  dir="rtl"
+                  autoComplete="off"
                 />
               </div>
               <div>

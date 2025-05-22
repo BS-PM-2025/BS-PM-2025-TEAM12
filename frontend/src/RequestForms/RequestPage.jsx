@@ -83,7 +83,7 @@ export default function RequestPage() {
       {/* Request type selection */}
       <div className="bg-white rounded-xl shadow-md p-6 mb-6">
         <h2 className="text-xl font-semibold text-gray-700 mb-6">בחר סוג בקשה</h2>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {requestTypes.map((req) => (
             <div

@@ -5,9 +5,9 @@ export default function ManageRequests() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedRequest, setSelectedRequest] = useState(null);
-  const [feedback, setFeedback] = useState('');
   const [comments, setComments] = useState([]);
   const [activeTab, setActiveTab] = useState('open');
+  const [newComment, setNewComment] = useState('');
 
   const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
 
@@ -53,7 +53,7 @@ export default function ManageRequests() {
 
   const handleViewRequest = (r) => {
     setSelectedRequest(r);
-    setFeedback('');
+    setNewComment('');
     fetchComments(r.id);
   };
 
@@ -62,28 +62,21 @@ export default function ManageRequests() {
       await fetch(`http://localhost:8000/api/requests/update-status/${selectedRequest.id}/`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus, feedback }),
+        body: JSON.stringify({ status: newStatus, feedback: selectedRequest.feedback || '' }),
       });
       
-      // עדכון מקומי של הסטטוס
-      setSelectedRequest({...selectedRequest, status: newStatus});
+      setSelectedRequest({...selectedRequest, status: newStatus, status_display: newStatus});
       
-      // עדכון הרשימה הראשית
       setRequests(requests.map(r => 
-        r.id === selectedRequest.id ? {...r, status: newStatus} : r
+        r.id === selectedRequest.id ? {...r, status: newStatus, status_display: newStatus} : r
       ));
-      
-      // שליחה של התגובה אם יש
-      if (feedback.trim()) {
-        await handleCommentSubmit();
-      }
     } catch (err) {
       alert('שגיאה בעדכון הבקשה');
     }
   };
 
-  const handleCommentSubmit = async () => {
-    if (!feedback.trim()) return;
+  const handleSendComment = async () => {
+    if (!newComment.trim()) return;
 
     try {
       await fetch(`http://localhost:8000/api/requests/comments/add/${selectedRequest.id}/`, {
@@ -91,10 +84,10 @@ export default function ManageRequests() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           author_id: currentUser.id,
-          content: feedback,
+          content: newComment,
         }),
       });
-      setFeedback('');
+      setNewComment('');
       fetchComments(selectedRequest.id);
     } catch {
       alert('שגיאה בשליחת תגובה');
@@ -111,18 +104,18 @@ export default function ManageRequests() {
     }
   };
 
-  const translateStatus = (status) => {
-    switch (status) {
+  const translateStatus = (statusDisplay) => {
+    switch (statusDisplay) {
       case 'ממתין': return '⏳ ממתין';
       case 'בטיפול': return '🔄 בטיפול';
       case 'אושר': return '✅ אושר';
       case 'נדחה': return '❌ נדחה';
-      default: return status;
+      default: return statusDisplay;
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
+  const getStatusColor = (statusDisplay) => {
+    switch (statusDisplay) {
       case 'ממתין': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
       case 'בטיפול': return 'bg-blue-100 text-blue-800 border-blue-300';
       case 'אושר': return 'bg-green-100 text-green-800 border-green-300';
@@ -132,22 +125,31 @@ export default function ManageRequests() {
   };
 
   const grouped = {
-    open: requests.filter(r => r.status !== 'אושר' && r.status !== 'נדחה'),
-    closed: requests.filter(r => r.status === 'אושר' || r.status === 'נדחה'),
+    open: requests.filter(r => r.status_display !== 'אושר' && r.status_display !== 'נדחה'),
+    closed: requests.filter(r => r.status_display === 'אושר' || r.status_display === 'נדחה'),
   };
   const shownRequests = activeTab === 'open' ? grouped.open : grouped.closed;
 
-  // רנדור לשורת טבלה בעיצוב חדש
+  const getStatusCounts = () => {
+    const total = requests.length;
+    const pending = requests.filter(r => r.status_display === 'ממתין').length;
+    const inProgress = requests.filter(r => r.status_display === 'בטיפול').length;
+    const approved = requests.filter(r => r.status_display === 'אושר').length;
+    const rejected = requests.filter(r => r.status_display === 'נדחה').length;
+    
+    return { total, pending, inProgress, approved, rejected };
+  };
+
+  const stats = getStatusCounts();
+
   const RequestRow = ({ request }) => (
     <div className="border rounded-lg overflow-hidden hover:shadow-md transition-all mb-4 bg-white">
       <div className="flex flex-col md:flex-row">
-        {/* סטטוס בצד ימין */}
-        <div className={`p-4 md:w-16 flex flex-row md:flex-col items-center justify-center ${getStatusColor(request.status)}`}>
-          <div className="text-xl mb-0 md:mb-2">{request.status === 'ממתין' ? '⏳' : request.status === 'בטיפול' ? '🔄' : request.status === 'אושר' ? '✅' : '❌'}</div>
-          <div className="text-xs font-medium mr-2 md:mr-0">{request.status}</div>
+        <div className={`p-4 md:w-16 flex flex-row md:flex-col items-center justify-center ${getStatusColor(request.status_display)}`}>
+          <div className="text-xl mb-0 md:mb-2">{request.status_display === 'ממתין' ? '⏳' : request.status_display === 'בטיפול' ? '🔄' : request.status_display === 'אושר' ? '✅' : '❌'}</div>
+          <div className="text-xs font-medium mr-2 md:mr-0">{request.status_display}</div>
         </div>
         
-        {/* תוכן הבקשה */}
         <div className="flex-1 p-4">
           <div className="flex flex-col md:flex-row justify-between">
             <div>
@@ -161,12 +163,12 @@ export default function ManageRequests() {
                 </span>
               </div>
             </div>
-            <button
+                <button
               onClick={() => handleViewRequest(request)}
               className="mt-2 md:mt-0 bg-blue-600 hover:bg-blue-700 text-white text-sm py-1 px-3 rounded-full transition-colors"
-            >
+                >
               פרטים מלאים
-            </button>
+                </button>
           </div>
           
           <div className="mt-2 flex flex-wrap justify-between items-end">
@@ -219,7 +221,6 @@ export default function ManageRequests() {
 
   return (
     <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6">
-      {/* כותרת עם רקע גרדיאנט */}
       <div className="relative overflow-hidden bg-gradient-to-l from-blue-700 to-indigo-900 rounded-2xl shadow-xl mb-8">
         <div className="absolute top-0 left-0 w-full h-full opacity-10">
           <img src="/campus.png" alt="Campus" className="w-full h-full object-cover" />
@@ -230,29 +231,27 @@ export default function ManageRequests() {
             מרכז ניהול הבקשות במערכת מאפשר לך לצפות, לעדכן ולנהל את כל הבקשות של הסטודנטים תחת אחריותך.
           </p>
           
-          {/* סטטיסטיקה מהירה */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
             <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4">
               <div className="text-white text-sm opacity-80">סך הכל</div>
-              <div className="text-white text-2xl font-bold">{requests.length}</div>
+              <div className="text-white text-2xl font-bold">{stats.total}</div>
             </div>
             <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4">
               <div className="text-white text-sm opacity-80">ממתינות</div>
-              <div className="text-white text-2xl font-bold">{requests.filter(r => r.status === 'ממתין').length}</div>
+              <div className="text-white text-2xl font-bold">{stats.pending}</div>
             </div>
             <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4">
               <div className="text-white text-sm opacity-80">בטיפול</div>
-              <div className="text-white text-2xl font-bold">{requests.filter(r => r.status === 'בטיפול').length}</div>
+              <div className="text-white text-2xl font-bold">{stats.inProgress}</div>
             </div>
             <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4">
               <div className="text-white text-sm opacity-80">הושלמו</div>
-              <div className="text-white text-2xl font-bold">{requests.filter(r => r.status === 'אושר' || r.status === 'נדחה').length}</div>
+              <div className="text-white text-2xl font-bold">{stats.approved + stats.rejected}</div>
             </div>
           </div>
         </div>
       </div>
       
-      {/* טאבים וסינון */}
       <div className="bg-white rounded-xl shadow-md p-6 mb-6">
         <div className="flex flex-col md:flex-row justify-between mb-6">
           <div className="mb-4 md:mb-0">
@@ -273,7 +272,6 @@ export default function ManageRequests() {
           </div>
         </div>
         
-        {/* רשימת הבקשות - עיצוב חדש */}
         <div>
           {shownRequests.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
@@ -292,12 +290,10 @@ export default function ManageRequests() {
           )}
         </div>
       </div>
-      
-      {/* מודאל פרטי בקשה */}
+
       {selectedRequest && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
           <div className="bg-white w-full max-w-3xl rounded-xl shadow-2xl relative mx-auto max-h-[90vh] flex flex-col">
-            {/* כפתור סגירה */}
             <button
               onClick={() => setSelectedRequest(null)}
               className="absolute top-3 left-3 text-gray-500 hover:text-gray-800 transition-colors bg-gray-100 hover:bg-gray-200 rounded-full p-2"
@@ -307,20 +303,18 @@ export default function ManageRequests() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            
-            {/* כותרת המודאל */}
+
             <div className="p-6 border-b">
               <div className="flex justify-between items-start">
                 <h2 className="text-2xl font-bold text-gray-900">{selectedRequest.subject}</h2>
-                <div className={`py-1 px-3 rounded-full text-sm font-medium ${getStatusColor(selectedRequest.status)}`}>
-                  {translateStatus(selectedRequest.status)}
+                <div className={`py-1 px-3 rounded-full text-sm font-medium ${getStatusColor(selectedRequest.status_display)}`}>
+                  {translateStatus(selectedRequest.status_display)}
                 </div>
               </div>
             </div>
             
-            {/* תוכן המודאל */}
             <div className="p-6 overflow-y-auto flex-1">
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-6">
                 <div>
                   <h3 className="font-semibold text-lg mb-4 pb-2 border-b text-blue-900">פרטי הבקשה</h3>
                   
@@ -337,20 +331,22 @@ export default function ManageRequests() {
                       </div>
                     </div>
                     
-                    {selectedRequest.attached_file && (
+                    {selectedRequest.file && (
                       <div>
                         <div className="text-sm font-medium text-gray-600">קובץ מצורף</div>
-                        <a
-                          href={`http://localhost:8000${selectedRequest.attached_file}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-1 inline-flex items-center text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 transition-colors px-3 py-2 rounded-lg"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                          </svg>
-                          צפייה בקובץ
-                        </a>
+                        <div className="mt-1">
+                          <a 
+                            href={selectedRequest.file}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 2a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2V8.414A1 1 0 0015.414 8L11.586 4.172A1 1 0 0010.879 4H6zm3 2a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1zm1 3a1 1 0 00-1 1v3a1 1 0 102 0v-3a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                            הצג קובץ מצורף
+                          </a>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -391,56 +387,55 @@ export default function ManageRequests() {
                     </div>
                   </div>
                 </div>
-              </div>
-              
-              {/* אזור התגובות */}
-              <div className="mt-8">
-                <h3 className="font-semibold text-lg mb-4 pb-2 border-b text-blue-900">היסטוריית תגובות</h3>
-                
-                <div className="bg-gray-50 rounded-lg p-4 mb-4 max-h-56 overflow-y-auto">
-                  {comments.length === 0 ? (
-                    <p className="text-gray-500 text-center py-6">אין תגובות עדיין</p>
-                  ) : (
-                    <div className="space-y-4">
-                      {comments.map((c) => (
-                        <div key={c.id} className={`flex ${c.author_id === currentUser.id ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`max-w-[80%] rounded-lg p-3 ${c.author_id === currentUser.id ? 'bg-blue-100 text-blue-900' : 'bg-white border border-gray-200'}`}>
-                            <div className="font-medium text-sm">{c.author_name}</div>
-                            <p className="text-sm mt-1">{c.content}</p>
-                            <div className="text-xs text-gray-500 mt-1 text-left">{new Date(c.timestamp).toLocaleString()}</div>
+
+                <div>
+                  <h3 className="font-semibold text-lg mb-4 pb-2 border-b text-blue-900">היסטוריית תגובות</h3>
+                  
+                  <div className="bg-gray-50 rounded-lg p-4 mb-4 max-h-56 overflow-y-auto">
+                    {comments.length === 0 ? (
+                      <p className="text-gray-500 text-center py-6">אין תגובות עדיין</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {comments.map((c) => (
+                          <div key={c.id} className={`flex ${c.author_id === currentUser.id ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`max-w-[80%] rounded-lg p-3 ${c.author_id === currentUser.id ? 'bg-blue-100 text-blue-900' : 'bg-white border border-gray-200'}`}>
+                              <div className="font-medium text-sm">{c.author_name}</div>
+                              <p className="text-sm mt-1">{c.content}</p>
+                              <div className="text-xs text-gray-500 mt-1 text-left">{new Date(c.timestamp).toLocaleString()}</div>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
             
-            {/* פעולות ותגובה */}
             <div className="p-6 border-t bg-gray-50">
-              <textarea
-                className="w-full border p-3 rounded-lg text-right mb-4 resize-none"
-                rows={3}
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-                placeholder="כתוב תגובה לסטודנט..."
-              />
-              
-              <div className="flex flex-col sm:flex-row justify-between gap-4">
-                <button 
-                  onClick={handleCommentSubmit}
-                  disabled={!feedback.trim()}
-                  className={`${feedback.trim() ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'} text-white py-2 px-4 rounded-lg transition-colors`}
-                >
-                  שלח תגובה
-                </button>
-                
-                <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row justify-between gap-4 items-center">
+                <div className="flex-1 flex items-center gap-3">
+                   <textarea
+                     className="w-full border p-3 rounded-lg resize-none"
+                     rows={3}
+                     value={newComment}
+                     onChange={(e) => setNewComment(e.target.value)}
+                     placeholder="הוסף תגובה כאן..."
+                   ></textarea>
+                   <button 
+                     onClick={handleSendComment}
+                     disabled={!newComment.trim()}
+                     className={`${newComment.trim() ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'} text-white py-2 px-4 rounded-lg transition-colors whitespace-nowrap`}
+                   >
+                     שלח תגובה
+                   </button>
+                </div>
+
+                <div className="flex items-center gap-3 mt-4 sm:mt-0">
                   <span className="text-gray-700 whitespace-nowrap">עדכן סטטוס:</span>
                   <select 
                     className="border p-2 rounded-lg bg-white"
-                    value={selectedRequest.status}
+                    value={selectedRequest.status_display}
                     onChange={(e) => handleStatusUpdate(e.target.value)}
                   >
                     <option value="ממתין">ממתין</option>

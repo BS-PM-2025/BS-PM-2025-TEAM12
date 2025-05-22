@@ -7,7 +7,8 @@ export default function Register() {
   const [departments, setDepartments] = useState([]); // לרשימת המחלקות
 
   const [formData, setFormData] = useState({
-    full_name: '',
+    first_name: '',
+    last_name: '',
     email: '',
     id_number: '',
     password: '',
@@ -27,7 +28,7 @@ export default function Register() {
 
   // טען את המחלקות מה־API
   useEffect(() => {
-    fetch('http://localhost:8000/academics/api/departments/')
+    fetch('http://localhost:8000/academics/departments/')
       .then(res => res.json())
       .then(data => setDepartments(data))
       .catch(() => setDepartments([]));
@@ -53,8 +54,8 @@ export default function Register() {
   };
 
   const validateForm = () => {
-    const { full_name, email, id_number, password, confirmPassword, department, phone_number } = formData;
-    if (!full_name || !email || !id_number || !password || !confirmPassword || !department || !phone_number) {
+    const { first_name, last_name, email, id_number, password, confirmPassword, department, phone_number } = formData;
+    if (!first_name || !last_name || !email || !id_number || !password || !confirmPassword || !department || !phone_number) {
       setErrorMessage('אנא מלא את כל השדות');
       return false;
     }
@@ -75,6 +76,7 @@ export default function Register() {
     if (!validateForm()) return;
 
     const { confirmPassword, ...dataToSend } = formData;
+    console.log('Sending registration data:', dataToSend);
 
     try {
       const res = await fetch('http://localhost:8000/User/register/', {
@@ -82,13 +84,17 @@ export default function Register() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dataToSend)
       });
+      console.log('Response status:', res.status);
       const data = await res.json();
+      console.log('Response data:', data);
       if (res.ok) {
         setShowSuccessModal(true);
       } else {
+        console.error('Registration error:', data.error);
         setErrorMessage(data.error || 'שגיאה כללית בהרשמה');
       }
-    } catch {
+    } catch (err) {
+      console.error('Registration error:', err);
       setErrorMessage('שגיאת שרת');
     }
   };
@@ -208,7 +214,7 @@ export default function Register() {
           }}
         >
           {/* --- מודל הצלחה משופר --- */}
-          {showSuccessModal && (
+      {showSuccessModal && (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
               <div className="success-modal bg-white rounded-xl p-8 shadow-xl max-w-sm w-full success-modal-content">
                 <div className="text-center mb-4">
@@ -220,15 +226,15 @@ export default function Register() {
                   נרשמת בהצלחה! 🎉
                 </h2>
                 <p className="mb-6 text-gray-600 text-center">אתה מועבר כעת לדף ההתחברות...</p>
-                <button
-                  onClick={() => navigate('/')}
+            <button
+              onClick={() => navigate('/')}
                   className="w-full px-6 py-3 gradient-btn text-white rounded-lg font-bold btn-transition"
-                >
-                  עבור להתחברות
-                </button>
-              </div>
-            </div>
-          )}
+            >
+              עבור להתחברות
+            </button>
+          </div>
+        </div>
+      )}
 
           <div className="form-container w-full max-w-md">
             <h2 className="text-3xl font-thaoma text-blue-800 mb-8 text-center">
@@ -243,18 +249,18 @@ export default function Register() {
                 borderTop: '5px solid #3B82F6'
               }}
             >
-              {/* שם מלא */}
+              {/* שם פרטי */}
               <div>
                 <label className="block mb-1 text-sm font-bold text-blue-900">
-                  שם מלא
+                  שם פרטי
                 </label>
                 <input
                   type="text"
-                  name="full_name"
-                  value={formData.full_name}
+                  name="first_name"
+                  value={formData.first_name}
                   onChange={handleChange}
                   required
-                  placeholder="הזן את שמך המלא"
+                  placeholder="הזן את שמך הפרטי"
                   className="
                     w-full px-3 py-2 border border-blue-300 rounded-lg bg-white
                     focus:outline-none transition input-focus-effect
@@ -263,171 +269,191 @@ export default function Register() {
                 />
               </div>
 
+              {/* שם משפחה */}
+          <div>
+                <label className="block mb-1 text-sm font-bold text-blue-900">
+                  שם משפחה
+                </label>
+            <input
+              type="text"
+                  name="last_name"
+                  value={formData.last_name}
+              onChange={handleChange}
+              required
+                  placeholder="הזן את שם המשפחה שלך"
+                  className="
+                    w-full px-3 py-2 border border-blue-300 rounded-lg bg-white
+                    focus:outline-none transition input-focus-effect
+                    text-blue-900 font-medium
+                  "
+            />
+          </div>
+
               <div className="grid grid-cols-2 gap-2">
-                {/* אימייל */}
-                <div>
+          {/* אימייל */}
+          <div>
                   <label className="block mb-1 text-sm font-bold text-blue-900">
                     אימייל
                   </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
                     placeholder="האימייל שלך"
                     className="
                       w-full px-3 py-2 border border-blue-300 rounded-lg bg-white
                       focus:outline-none transition input-focus-effect
                       text-blue-900 font-medium
                     "
-                  />
-                </div>
+            />
+          </div>
 
-                {/* ת.ז. */}
-                <div>
+          {/* ת.ז. */}
+          <div>
                   <label className="block mb-1 text-sm font-bold text-blue-900">
                     תעודת זהות
                   </label>
-                  <input
-                    type="text"
-                    name="id_number"
-                    value={formData.id_number}
-                    onChange={handleChange}
-                    required
+            <input
+              type="text"
+              name="id_number"
+              value={formData.id_number}
+              onChange={handleChange}
+              required
                     placeholder="תעודת הזהות שלך"
                     className="
                       w-full px-3 py-2 border border-blue-300 rounded-lg bg-white
                       focus:outline-none transition input-focus-effect
                       text-blue-900 font-medium
                     "
-                  />
+            />
                 </div>
-              </div>
+          </div>
 
               <div className="grid grid-cols-2 gap-2">
-                {/* מחלקה */}
-                <div>
+          {/* מחלקה */}
+          <div>
                   <label className="block mb-1 text-sm font-bold text-blue-900">
                     מחלקה
                   </label>
-                  <select
-                    name="department"
-                    value={formData.department}
-                    onChange={handleChange}
-                    required
+            <select
+              name="department"
+              value={formData.department}
+              onChange={handleChange}
+              required
                     className="
                       w-full px-3 py-2 border border-blue-300 rounded-lg bg-white
                       focus:outline-none transition input-focus-effect
                       text-blue-900 font-medium
                     "
-                  >
-                    <option value="">– בחר מחלקה –</option>
-                    {departments.map(d => (
-                      <option key={d.id} value={d.id}>{d.name}</option>
-                    ))}
-                  </select>
-                </div>
+            >
+              <option value="">– בחר מחלקה –</option>
+              {departments.map(d => (
+                <option key={d.id} value={d.id}>{d.name}</option>
+              ))}
+            </select>
+          </div>
 
-                {/* טלפון */}
-                <div>
+          {/* טלפון */}
+          <div>
                   <label className="block mb-1 text-sm font-bold text-blue-900">
                     טלפון
                   </label>
-                  <input
-                    type="text"
-                    name="phone_number"
-                    value={formData.phone_number}
-                    onChange={handleChange}
-                    required
+            <input
+              type="text"
+              name="phone_number"
+              value={formData.phone_number}
+              onChange={handleChange}
+              required
                     placeholder="מספר הטלפון שלך"
                     className="
                       w-full px-3 py-2 border border-blue-300 rounded-lg bg-white
                       focus:outline-none transition input-focus-effect
                       text-blue-900 font-medium
                     "
-                  />
+            />
                 </div>
-              </div>
+          </div>
 
               <div className="grid grid-cols-2 gap-2">
-                {/* סיסמה */}
-                <div>
+          {/* סיסמה */}
+          <div>
                   <label className="block mb-1 text-sm font-bold text-blue-900">
                     סיסמה
                   </label>
-                  <input
-                    type="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
                     placeholder="סיסמה חדשה"
                     className="
                       w-full px-3 py-2 border border-blue-300 rounded-lg bg-white
                       focus:outline-none transition input-focus-effect
                       text-blue-900 font-medium
                     "
-                  />
+            />
                   <ul className="mt-1 text-xs space-y-0 password-requirements">
                     <li className={formData.password.length >= 6 ? 'text-green-600' : 'text-gray-600'}>✔ 6 תווים</li>
                     <li className={hasUpper(formData.password) ? 'text-green-600' : 'text-gray-600'}>✔ אות גדולה</li>
                     <li className={hasLower(formData.password) ? 'text-green-600' : 'text-gray-600'}>✔ אות קטנה</li>
-                  </ul>
+            </ul>
                   {passwordError && <p className="text-red-500 text-xs">{passwordError}</p>}
-                </div>
+          </div>
 
-                {/* אישור סיסמה */}
-                <div>
+          {/* אישור סיסמה */}
+          <div>
                   <label className="block mb-1 text-sm font-bold text-blue-900">
                     אישור סיסמה
                   </label>
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    required
+            <input
+              type="password"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              required
                     placeholder="אימות סיסמה"
                     className="
                       w-full px-3 py-2 border border-blue-300 rounded-lg bg-white
                       focus:outline-none transition input-focus-effect
                       text-blue-900 font-medium
                     "
-                  />
+            />
                   {matchError && <p className="text-red-500 text-xs">{matchError}</p>}
                 </div>
-              </div>
+          </div>
 
-              {/* תפקיד */}
-              <div>
+          {/* תפקיד */}
+          <div>
                 <label className="block mb-1 text-sm font-bold text-blue-900">
                   סוג משתמש
                 </label>
-                <select
-                  name="role"
-                  value={formData.role}
-                  onChange={handleChange}
+            <select
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
                   className="
                     w-full px-3 py-2 border border-blue-300 rounded-lg bg-white
                     focus:outline-none transition input-focus-effect
                     text-blue-900 font-medium
                   "
-                >
-                  <option value="student">סטודנט</option>
-                  <option value="lecturer">מרצה</option>
-                </select>
-              </div>
+            >
+              <option value="student">סטודנט</option>
+              <option value="lecturer">מרצה</option>
+            </select>
+          </div>
 
-              <button
-                type="submit"
+          <button
+            type="submit"
                 className="
                   w-full py-3 mt-2 gradient-btn
                   text-white font-bold rounded-lg text-base btn-transition
                 "
-              >
-                הירשם
-              </button>
+          >
+            הירשם
+          </button>
 
               {errorMessage && (
                 <div className="error-message py-1 px-2">
@@ -455,7 +481,7 @@ export default function Register() {
               >
                 חזרה להתחברות
               </button>
-            </form>
+        </form>
           </div>
         </div>
 
@@ -466,8 +492,8 @@ export default function Register() {
             alt="Campus illustration"
   className="object-cover w-full h-full"
           />
-        </div>
-      </section>
+      </div>
+    </section>
     </>
   );
 }

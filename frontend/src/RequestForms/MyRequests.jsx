@@ -121,7 +121,7 @@ export default function MyRequests() {
     const inProgress = requests.filter(r => r.status === 'בטיפול').length;
     const approved = requests.filter(r => r.status === 'אושר').length;
     const rejected = requests.filter(r => r.status === 'נדחה').length;
-    
+
     return { total, pending, inProgress, approved, rejected };
   };
 
@@ -136,7 +136,7 @@ export default function MyRequests() {
           <div className="text-xl mb-0 md:mb-2">{request.status === 'ממתין' ? '⏳' : request.status === 'בטיפול' ? '🔄' : request.status === 'אושר' ? '✅' : '❌'}</div>
           <div className="text-xs font-medium mr-2 md:mr-0">{request.status}</div>
         </div>
-        
+
         {/* Request content */}
         <div className="flex-1 p-4">
           <div className="flex flex-col md:flex-row justify-between">
@@ -158,7 +158,7 @@ export default function MyRequests() {
               פרטים מלאים
             </button>
           </div>
-          
+
           <div className="mt-2">
             {request.assigned_lecturer && (
               <div className="flex items-center mt-1">
@@ -184,7 +184,7 @@ export default function MyRequests() {
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div className="max-w-6xl mx-auto p-6 bg-white rounded-xl shadow-xl">
@@ -211,7 +211,7 @@ export default function MyRequests() {
           <p className="text-blue-100 max-w-2xl">
             צפה בכל הבקשות שהגשת למערכת, עקוב אחר הסטטוס שלהן, ותקשר ישירות עם צוות המרצים.
           </p>
-          
+
           {/* Quick statistics */}
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mt-6">
             <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4">
@@ -237,10 +237,10 @@ export default function MyRequests() {
           </div>
         </div>
       </div>
-      
+
       {/* Filtering and search section */}
       {/* (Remove the search/filter UI block here) */}
-      
+
       {/* Requests list with title */}
       <div>
         <h2 className="text-xl font-semibold text-gray-700 mb-4">
@@ -262,7 +262,7 @@ export default function MyRequests() {
           </div>
         )}
       </div>
-      
+
       {/* Request details modal */}
       {selectedRequest && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
@@ -287,26 +287,26 @@ export default function MyRequests() {
                 </div>
               </div>
             </div>
-            
+
             {/* Modal content */}
             <div className="p-6 overflow-y-auto flex-1">
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <h3 className="font-semibold text-lg mb-4 pb-2 border-b text-blue-900">פרטי הבקשה</h3>
-                  
+
                   <div className="space-y-4">
                     <div>
                       <div className="text-sm font-medium text-gray-600">סוג בקשה</div>
                       <div className="mt-1 text-gray-900">{translateType(selectedRequest.request_type)}</div>
                     </div>
-                    
+
                     <div>
                       <div className="text-sm font-medium text-gray-600">תיאור</div>
                       <div className="mt-1 text-gray-900 whitespace-pre-line bg-gray-50 p-3 rounded-lg border text-sm">
                         {selectedRequest.description}
                       </div>
                     </div>
-                    
+
                     {selectedRequest.attached_file && (
                       <div>
                         <div className="text-sm font-medium text-gray-600">קובץ מצורף</div>
@@ -325,10 +325,10 @@ export default function MyRequests() {
                     )}
                   </div>
                 </div>
-                
+
                 <div>
                   <h3 className="font-semibold text-lg mb-4 pb-2 border-b text-blue-900">פרטים נוספים</h3>
-                  
+
                   <div className="space-y-4">
                     <div>
                       <div className="text-sm font-medium text-gray-600">מרצה אחראי</div>
@@ -345,7 +345,7 @@ export default function MyRequests() {
                         )}
                       </div>
                     </div>
-                    
+
                     <div>
                       <div className="text-sm font-medium text-gray-600">תאריך הגשה</div>
                       <div className="mt-1 text-gray-900">
@@ -358,7 +358,7 @@ export default function MyRequests() {
                         })}
                       </div>
                     </div>
-                    
+
                     <div>
                       <div className="text-sm font-medium text-gray-600">היסטוריית סטטוסים</div>
                       <div className="mt-1 flex items-center">

@@ -28,12 +28,17 @@ class UserSerializer(serializers.ModelSerializer):
         required=False,
         help_text="סטטוס אישור מרצה"
     )
+    full_name = serializers.SerializerMethodField()
 
+    def get_full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}".strip()
 
     class Meta:
         model = User
         fields = [
             'id',
+            'first_name',
+            'last_name',
             'full_name',
             'email',
             'id_number',
@@ -56,6 +61,10 @@ class UserSerializer(serializers.ModelSerializer):
         phone = validated_data.pop('phone_number', '')
         raw_pwd = validated_data.pop('password')
         role = validated_data.get('role')
+        email = validated_data.get('email')
+
+        # Set username to email (required by Django's AbstractUser)
+        validated_data['username'] = email
 
         # By default, lecturers need approval, others auto-approved
         if 'is_approved' in validated_data:
@@ -73,10 +82,11 @@ class UserSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         # Update basic fields
-        instance.full_name   = validated_data.get('full_name', instance.full_name)
-        instance.email       = validated_data.get('email', instance.email)
-        instance.id_number   = validated_data.get('id_number', instance.id_number)
-        instance.role        = validated_data.get('role', instance.role)
+        instance.first_name = validated_data.get('first_name', instance.first_name)
+        instance.last_name = validated_data.get('last_name', instance.last_name)
+        instance.email = validated_data.get('email', instance.email)
+        instance.id_number = validated_data.get('id_number', instance.id_number)
+        instance.role = validated_data.get('role', instance.role)
 
         # Optional fields
         if 'department' in validated_data:
@@ -89,7 +99,6 @@ class UserSerializer(serializers.ModelSerializer):
         # Password change
         if 'password' in validated_data:
             instance.password = make_password(validated_data.get('password'))
-
 
         if 'courses' in validated_data:
             instance.courses.set(validated_data.get('courses'))
