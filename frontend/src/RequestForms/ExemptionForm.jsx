@@ -123,13 +123,13 @@ export default function ExemptionForm() {
         </div>
         <div className="relative p-8 md:p-10">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">בקשה לפטור מקורס</h1>
-          <p className="text-yellow-100 max-w-2xl">
+          <p className="text-gray-900 text-lg font-semibold max-w-2xl">
             טופס זה מיועד לבקשת פטור מקורס על סמך לימודים קודמים. יש למלא את כל הפרטים הנדרשים ולצרף אישורים רלוונטיים.
           </p>
           
           <button
             onClick={navigateBack}
-            className="mt-6 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-2 rounded-lg inline-flex items-center transition-colors"
+            className="mt-6 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-5 py-2.5 rounded-lg inline-flex items-center transition-colors font-bold text-lg"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
@@ -167,63 +167,63 @@ export default function ExemptionForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">קורס ממנו מבקשים פטור</label>
-        <select
-          name="course"
-          required
-          onChange={handleChange}
+              <select
+                name="course"
+                required
+                onChange={handleChange}
                 value={formData.course}
                 className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-right"
-        >
-          <option value="">בחר קורס מהמחלקה</option>
-          {courses.map((c) => (
-            <option key={c.id} value={c.name}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+              >
+                <option value="">בחר קורס מהמחלקה</option>
+                {courses.map((c) => (
+                  <option key={c.id} value={c.name}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">מוסד לימודים קודם</label>
-        <input
-          type="text"
-          name="previousInstitution"
+              <input
+                type="text"
+                name="previousInstitution"
                 placeholder="שם המוסד האקדמי הקודם"
-          required
+                required
                 value={formData.previousInstitution}
-          onChange={handleChange}
+                onChange={handleChange}
                 className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-right"
-        />
+              />
             </div>
           </div>
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">שם הקורס במוסד הקודם</label>
-        <input
-          type="text"
-          name="previousCourse"
+            <input
+              type="text"
+              name="previousCourse"
               placeholder="שם הקורס המקביל שנלמד במוסד הקודם"
-          required
+              required
               value={formData.previousCourse}
-          onChange={handleChange}
+              onChange={handleChange}
               className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-right"
-        />
+            />
           </div>
 
-          <div>
+          <div className="mx-auto max-w-3xl w-full">
             <label className="block text-sm font-medium text-gray-700 mb-1">נימוק לבקשת הפטור</label>
-        <textarea
-          name="reason"
+            <textarea
+              name="reason"
               placeholder="פרט מדוע אתה זכאי לפטור (תוכן הקורס דומה, הישגים וכו')"
-          rows={4}
-          required
+              rows={4}
+              required
               value={formData.reason}
-          onChange={handleChange}
+              onChange={handleChange}
               className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-right"
-        ></textarea>
+            ></textarea>
           </div>
 
-          <div>
+          <div className="mx-auto max-w-3xl w-full">
             <label className="block text-sm font-medium text-gray-700 mb-1">צירוף אישורים (גיליון ציונים, סילבוס וכו')</label>
             <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
               <div className="space-y-1 text-center">
@@ -233,12 +233,12 @@ export default function ExemptionForm() {
                 <div className="flex text-sm text-gray-600">
                   <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-yellow-600 hover:text-yellow-500 focus-within:outline-none">
                     <span>העלה קובץ</span>
-        <input
+                    <input
                       id="file-upload"
                       name="file"
-          type="file"
+                      type="file"
                       className="sr-only"
-          onChange={handleChange}
+                      onChange={handleChange}
                     />
                   </label>
                   <p className="pr-1">או גרור ושחרר</p>
@@ -255,7 +255,7 @@ export default function ExemptionForm() {
             </div>
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex justify-center">
             <button
               type="submit"
               disabled={isSubmitting || success}
@@ -274,9 +274,9 @@ export default function ExemptionForm() {
               ) : (
                 'שלח בקשה'
               )}
-        </button>
+            </button>
           </div>
-      </form>
+        </form>
       </div>
     </div>
   );
