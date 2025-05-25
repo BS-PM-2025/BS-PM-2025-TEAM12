@@ -128,13 +128,13 @@ export default function AppealForm() {
         </div>
         <div className="relative p-8 md:p-10">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">ערעור על ציון</h1>
-          <p className="text-pink-100 max-w-2xl">
+          <p className="text-gray-900 text-lg font-semibold max-w-2xl">
             טופס זה מיועד להגשת ערעור על ציון. יש למלא את כל הפרטים הנדרשים כדי שהבקשה תיבחן בהקדם.
           </p>
           
           <button
             onClick={navigateBack}
-            className="mt-6 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-2 rounded-lg inline-flex items-center transition-colors"
+            className="mt-6 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-5 py-2.5 rounded-lg inline-flex items-center transition-colors font-bold text-lg"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />

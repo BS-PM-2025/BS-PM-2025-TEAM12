@@ -5,6 +5,7 @@ export default function ManageRequests() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [feedback, setFeedback] = useState('');
   const [comments, setComments] = useState([]);
   const [activeTab, setActiveTab] = useState('open');
   const [newComment, setNewComment] = useState('');
@@ -53,6 +54,7 @@ export default function ManageRequests() {
 
   const handleViewRequest = (r) => {
     setSelectedRequest(r);
+    setFeedback('');
     setNewComment('');
     fetchComments(r.id);
   };
@@ -62,7 +64,7 @@ export default function ManageRequests() {
       await fetch(`http://localhost:8000/api/requests/update-status/${selectedRequest.id}/`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus, feedback: selectedRequest.feedback || '' }),
+        body: JSON.stringify({ status: newStatus, feedback }),
       });
       
       setSelectedRequest({...selectedRequest, status: newStatus, status_display: newStatus});
@@ -70,6 +72,10 @@ export default function ManageRequests() {
       setRequests(requests.map(r => 
         r.id === selectedRequest.id ? {...r, status: newStatus, status_display: newStatus} : r
       ));
+      
+      if (feedback.trim()) {
+        await handleSendComment();
+      }
     } catch (err) {
       alert('שגיאה בעדכון הבקשה');
     }
@@ -314,7 +320,7 @@ export default function ManageRequests() {
             </div>
             
             <div className="p-6 overflow-y-auto flex-1">
-              <div className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <h3 className="font-semibold text-lg mb-4 pb-2 border-b text-blue-900">פרטי הבקשה</h3>
                   
@@ -337,8 +343,8 @@ export default function ManageRequests() {
                         <div className="mt-1">
                           <a 
                             href={selectedRequest.file}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                  target="_blank"
+                  rel="noopener noreferrer"
                             className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" viewBox="0 0 20 20" fill="currentColor">
@@ -349,100 +355,68 @@ export default function ManageRequests() {
                         </div>
                       </div>
                     )}
+                    
+                    <div className="mt-4 pt-4 border-t">
+                      <div className="text-sm font-medium text-gray-600 mb-2">סטטוס</div>
+                      <select 
+                        value={selectedRequest.status_display}
+                        onChange={(e) => handleStatusUpdate(e.target.value)}
+                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                      >
+                        <option value="ממתין">ממתין</option>
+                        <option value="בטיפול">בטיפול</option>
+                        <option value="אושר">אושר</option>
+                        <option value="נדחה">נדחה</option>
+                      </select>
+                    </div>
+
+                    <div className="mt-4">
+                      <div className="text-sm font-medium text-gray-600 mb-2">פידבק (אופציונלי)</div>
+                      <textarea
+                        value={feedback}
+                        onChange={(e) => setFeedback(e.target.value)}
+                        rows={4}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        placeholder="הוסף פידבק לבקשה..."
+                      ></textarea>
+                    </div>
                   </div>
                 </div>
                 
                 <div>
-                  <h3 className="font-semibold text-lg mb-4 pb-2 border-b text-blue-900">פרטי הסטודנט</h3>
-                  
-                  <div className="space-y-4">
-                    <div className="flex items-center">
-                      <div className="bg-blue-100 text-blue-800 rounded-full w-10 h-10 flex items-center justify-center font-bold ml-3">
-                        {selectedRequest.student_name?.charAt(0) || "S"}
+                  <h3 className="font-semibold text-lg mb-4 pb-2 border-b text-blue-900">תגובות</h3>
+                  <div className="space-y-4 max-h-60 overflow-y-auto pr-3">
+                    {comments.map((comment) => (
+                      <div key={comment.id} className="bg-gray-50 p-3 rounded-lg text-sm border">
+                        <div className="font-medium text-gray-900 mb-1">{comment.author_name}</div>
+                        <div className="text-gray-700 whitespace-pre-line">{comment.content}</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {new Date(comment.created_at).toLocaleString()}
+                        </div>
                       </div>
-                      <div>
-                        <div className="font-medium">{selectedRequest.student_name}</div>
-                        <div className="text-sm text-gray-600">סטודנט</div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <div className="text-sm font-medium text-gray-600">מרצה אחראי</div>
-                      <div className="mt-1 text-gray-900">
-                        {selectedRequest.assigned_lecturer?.full_name || '—'}
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <div className="text-sm font-medium text-gray-600">תאריך הגשה</div>
-                      <div className="mt-1 text-gray-900">
-                        {new Date(selectedRequest.submitted_at).toLocaleDateString('he-IL', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold text-lg mb-4 pb-2 border-b text-blue-900">היסטוריית תגובות</h3>
-                  
-                  <div className="bg-gray-50 rounded-lg p-4 mb-4 max-h-56 overflow-y-auto">
-                    {comments.length === 0 ? (
-                      <p className="text-gray-500 text-center py-6">אין תגובות עדיין</p>
-                    ) : (
-                      <div className="space-y-4">
-                        {comments.map((c) => (
-                          <div key={c.id} className={`flex ${c.author_id === currentUser.id ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-[80%] rounded-lg p-3 ${c.author_id === currentUser.id ? 'bg-blue-100 text-blue-900' : 'bg-white border border-gray-200'}`}>
-                              <div className="font-medium text-sm">{c.author_name}</div>
-                              <p className="text-sm mt-1">{c.content}</p>
-                              <div className="text-xs text-gray-500 mt-1 text-left">{new Date(c.timestamp).toLocaleString()}</div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+                    ))}
+                    {comments.length === 0 && (
+                      <div className="text-center text-gray-500 py-4">אין תגובות לבקשה זו.</div>
+              )}
             </div>
-            
-            <div className="p-6 border-t bg-gray-50">
-              <div className="flex flex-col sm:flex-row justify-between gap-4 items-center">
-                <div className="flex-1 flex items-center gap-3">
-                   <textarea
-                     className="w-full border p-3 rounded-lg resize-none"
-                     rows={3}
-                     value={newComment}
-                     onChange={(e) => setNewComment(e.target.value)}
-                     placeholder="הוסף תגובה כאן..."
-                   ></textarea>
-                   <button 
-                     onClick={handleSendComment}
-                     disabled={!newComment.trim()}
-                     className={`${newComment.trim() ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'} text-white py-2 px-4 rounded-lg transition-colors whitespace-nowrap`}
-                   >
-                     שלח תגובה
-                   </button>
-                </div>
 
-                <div className="flex items-center gap-3 mt-4 sm:mt-0">
-                  <span className="text-gray-700 whitespace-nowrap">עדכן סטטוס:</span>
-                  <select 
-                    className="border p-2 rounded-lg bg-white"
-                    value={selectedRequest.status_display}
-                    onChange={(e) => handleStatusUpdate(e.target.value)}
-                  >
-                    <option value="ממתין">ממתין</option>
-                    <option value="בטיפול">בטיפול</option>
-                    <option value="אושר">אושר</option>
-                    <option value="נדחה">נדחה</option>
-                  </select>
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="text-sm font-medium text-gray-600 mb-2">הוסף תגובה</div>
+            <textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+              rows={3}
+                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      placeholder="כתוב תגובה כאן..."
+                    ></textarea>
+                    <button
+                      onClick={handleSendComment}
+                      disabled={!newComment.trim()}
+                      className="mt-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      שלח תגובה
+              </button>
+                  </div>
                 </div>
               </div>
             </div>

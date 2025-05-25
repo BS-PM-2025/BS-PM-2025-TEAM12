@@ -89,7 +89,7 @@ export default function MilitaryForm() {
         </div>
         <div className="relative p-8 md:p-10">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">בקשת מילואים</h1>
-          <p className="text-green-100 max-w-2xl">
+          <p className="text-gray-900 text-lg font-semibold max-w-2xl">
             טופס זה מיועד לבקשות הקשורות לשירות מילואים. יש למלא את הפרטים ולצרף את צו המילואים במידת האפשר.
           </p>
           
@@ -169,7 +169,7 @@ export default function MilitaryForm() {
             />
           </div>
 
-          <div>
+          <div className="mx-auto max-w-3xl">
             <label className="block text-sm font-medium text-gray-700 mb-1">פירוט הבקשה</label>
             <textarea
               name="notes"
@@ -181,7 +181,7 @@ export default function MilitaryForm() {
             ></textarea>
           </div>
 
-          <div>
+          <div className="mx-auto max-w-3xl">
             <label className="block text-sm font-medium text-gray-700 mb-1">צירוף צו מילואים</label>
             <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
               <div className="space-y-1 text-center">
@@ -213,7 +213,7 @@ export default function MilitaryForm() {
             </div>
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex justify-center">
             <button
               type="submit"
               disabled={isSubmitting || success}

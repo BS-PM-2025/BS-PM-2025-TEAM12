@@ -281,21 +281,6 @@ function Dashboard() {
     }
   }, []);
 
-  // רנדור כרטיסי סטטיסטיקה
-  const renderStatCard = (title, value, color, icon) => (
-    <div className={`p-6 bg-white rounded-xl shadow-sm border-t-4 border-${color}-500 transition-all hover:shadow-md`}>
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-medium text-gray-600 mb-1">{title}</h3>
-          <p className={`text-3xl font-bold text-${color}-600`}>{value}</p>
-        </div>
-        <div className={`p-3 rounded-full bg-${color}-100 text-${color}-500`}>
-          {icon}
-        </div>
-      </div>
-    </div>
-  );
-
   // אם יש טעינה או אין משתמש מחובר
   if (loading) {
     return (
@@ -331,7 +316,14 @@ function Dashboard() {
           <img src="/campus.png" alt="Campus" className="w-full h-full object-cover" />
         </div>
         <div className="relative z-10">
-          <div className="flex items-start justify-between">
+          <div className="flex items-start gap-6 rtl">
+            <div className="hidden md:block">
+              <div className="relative w-44 h-44 bg-white/20 backdrop-blur-sm rounded-full flex justify-center items-center">
+                <div className="w-36 h-36 bg-white rounded-full flex justify-center items-center text-5xl font-bold text-blue-900">
+                  {user.full_name?.split(' ').map(name => name[0]).join('')}
+                </div>
+              </div>
+            </div>
             <div className="space-y-4 max-w-2xl">
               <h1 className="text-4xl font-bold">
                 שלום {user.full_name} 👋
@@ -369,65 +361,14 @@ function Dashboard() {
                 )}
               </div>
             </div>
-            <div className="hidden md:block">
-              <div className="relative w-44 h-44 bg-white/20 backdrop-blur-sm rounded-full flex justify-center items-center">
-                <div className="w-36 h-36 bg-white rounded-full flex justify-center items-center text-5xl font-bold text-blue-900">
-                  {user.full_name?.split(' ').map(name => name[0]).join('')}
-                </div>
-              </div>
-            </div>
           </div>
         </div>
-      </div>
-
-      {/* סטטיסטיקה - מותאם לפי תפקיד */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-        {renderStatCard(
-          user.role === 'student' ? 'סך הבקשות שלי' : 'סך כל הבקשות', 
-          stats.total, 
-          'blue', 
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        )}
-        {renderStatCard(
-          user.role === 'student' ? 'ממתינות לטיפול' : 'ממתינות לטיפול', 
-          stats.pending, 
-          'yellow', 
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        )}
-        {renderStatCard(
-          user.role === 'student' ? 'בטיפול' : 'בטיפול', 
-          stats.inProgress, 
-          'blue', 
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-        )}
-        {renderStatCard(
-          user.role === 'student' ? 'בקשות שאושרו' : 'בקשות מאושרות', 
-          stats.approved, 
-          'green', 
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        )}
-        {renderStatCard(
-          user.role === 'student' ? 'בקשות שנדחו' : 'בקשות שנדחו', 
-          stats.rejected, 
-          'red', 
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        )}
       </div>
 
       {/* חלק תחתון עם שני אזורים */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* בקשות אחרונות */}
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="flex justify-between items-center p-6 border-b">
             <h2 className="text-xl font-bold text-gray-800">
               {user.role === 'student' ? 'הבקשות האחרונות שלי' : 'בקשות אחרונות במערכת'}
@@ -443,7 +384,7 @@ function Dashboard() {
             {recentRequests.map(request => (
               <div key={request.id} className="p-5 hover:bg-gray-50 transition-colors flex items-center justify-between">
                 <div className="flex-1">
-                  <h3 className="font-medium text-gray-900 mb-1">{request.subject}</h3>
+                  <h3 className="font-medium text-gray-900 mb-1 text-lg">{request.subject}</h3>
                   <div className="flex items-center flex-wrap">
                     {/* שם הסטודנט - מוצג רק למרצים ומנהלים */}
                     {user.role !== 'student' && (
@@ -469,6 +410,16 @@ function Dashboard() {
                        request.request_type === 'military' ? 'מילואים' : 'אחר'}
                     </span>
                   </div>
+                  
+                  {/* שם המרצה המטפל - מוצג בשורה נפרדת */}
+                  {request.assigned_lecturer && (
+                    <div className="mt-1">
+                      <span className="text-sm text-gray-900 font-bold">
+                        מרצה: {request.assigned_lecturer.full_name || 'לא מוגדר'}
+                      </span>
+                    </div>
+                  )}
+                  
                   {/* תאריך - מוצג בשורה נפרדת */}
                   <div className="mt-1">
                     <span className="text-xs text-gray-500">
@@ -505,51 +456,48 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* אזור משני (לוח זמנים והודעות) */}
-        <div className="space-y-6">
-          {/* לוח זמנים */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="p-5 border-b">
-              <h2 className="text-xl font-bold text-gray-800">תאריכים חשובים</h2>
-            </div>
-            <div className="divide-y">
-              {upcomingDeadlines.map(deadline => (
-                <div key={deadline.id} className="p-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center">
-                    <div className={`p-2 mr-4 rounded-lg ${deadline.days <= 3 ? 'bg-red-100' : 'bg-blue-100'}`}>
-                      <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${deadline.days <= 3 ? 'text-red-500' : 'text-blue-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <div className="mr-2">
-                      <h3 className="font-medium text-gray-900">{deadline.title}</h3>
-                      <div className="flex items-center mt-1">
-                        <span className="text-xs text-gray-500">{deadline.date}</span>
-                        <span className={`mr-2 text-xs font-medium ${deadline.days <= 3 ? 'text-red-600' : 'text-blue-600'}`}>
-                          {deadline.days} ימים נותרו
-                        </span>
-                      </div>
+        {/* לוח זמנים */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="p-5 border-b">
+            <h2 className="text-xl font-bold text-gray-800">תאריכים חשובים</h2>
+          </div>
+          <div className="divide-y">
+            {upcomingDeadlines.map(deadline => (
+              <div key={deadline.id} className="p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-center">
+                  <div className={`p-2 mr-4 rounded-lg ${deadline.days <= 3 ? 'bg-red-100' : 'bg-blue-100'}`}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${deadline.days <= 3 ? 'text-red-500' : 'text-blue-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div className="mr-2">
+                    <h3 className="font-medium text-gray-900">{deadline.title}</h3>
+                    <div className="flex items-center mt-1">
+                      <span className="text-xs text-gray-500">{deadline.date}</span>
+                      <span className={`mr-2 text-xs font-medium ${deadline.days <= 3 ? 'text-red-600' : 'text-blue-600'}`}>
+                        {deadline.days} ימים נותרו
+                      </span>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
+        </div>
 
-          {/* הודעות מערכת */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="p-5 border-b">
-              <h2 className="text-xl font-bold text-gray-800">הודעות מערכת</h2>
-            </div>
-            <div className="divide-y">
-              {announcements.map(announcement => (
-                <div key={announcement.id} className="p-4 hover:bg-gray-50 transition-colors">
-                  <h3 className="font-medium text-gray-900">{announcement.title}</h3>
-                  <p className="text-gray-600 text-sm mt-1">{announcement.content}</p>
-                  <p className="text-xs text-gray-500 mt-2">{announcement.date}</p>
-                </div>
-              ))}
-            </div>
+        {/* הודעות מערכת */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="p-5 border-b">
+            <h2 className="text-xl font-bold text-gray-800">הודעות מערכת</h2>
+          </div>
+          <div className="divide-y">
+            {announcements.map(announcement => (
+              <div key={announcement.id} className="p-4 hover:bg-gray-50 transition-colors">
+                <h3 className="font-medium text-gray-900">{announcement.title}</h3>
+                <p className="text-gray-600 text-sm mt-1">{announcement.content}</p>
+                <p className="text-xs text-gray-500 mt-2">{announcement.date}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
