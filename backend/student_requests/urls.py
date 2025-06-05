@@ -6,7 +6,8 @@ from .views import (
     ManageRequestsView,
     UpdateRequestStatusView,
     RequestCommentsView,
-    NotificationsView
+    NotificationsView,
+    FeedbackView
 )
 
 urlpatterns = [
@@ -20,4 +21,6 @@ urlpatterns = [
     path('notifications/<int:user_id>/', NotificationsView.as_view(), name='notifications'),
     path('unread/<int:user_id>/', NotificationsView.as_view(), name='unread-notifications'),
     path('mark-read/<int:user_id>/', NotificationsView.as_view(), name='mark-read-notifications'),
+    path('feedback/', FeedbackView.as_view(), name='feedback'),
+    path('feedback/<int:feedback_id>/', FeedbackView.as_view(), name='delete-feedback'),
 ]

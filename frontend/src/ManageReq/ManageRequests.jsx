@@ -298,124 +298,189 @@ export default function ManageRequests() {
       </div>
 
       {selectedRequest && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white w-full max-w-3xl rounded-xl shadow-2xl relative mx-auto max-h-[90vh] flex flex-col">
-            <button
-              onClick={() => setSelectedRequest(null)}
-              className="absolute top-3 left-3 text-gray-500 hover:text-gray-800 transition-colors bg-gray-100 hover:bg-gray-200 rounded-full p-2"
-              aria-label="סגור"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-
-            <div className="p-6 border-b">
-              <div className="flex justify-between items-start">
-                <h2 className="text-2xl font-bold text-gray-900">{selectedRequest.subject}</h2>
-                <div className={`py-1 px-3 rounded-full text-sm font-medium ${getStatusColor(selectedRequest.status_display)}`}>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white w-full max-w-6xl rounded-3xl shadow-2xl relative mx-auto max-h-[95vh] flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="relative bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 text-white p-6">
+              <button
+                onClick={() => setSelectedRequest(null)}
+                className="absolute top-4 left-4 text-black/80 hover:text-black hover:bg-gray-100/80 rounded-full p-2 transition-all duration-200"
+                aria-label="סגור"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              
+              <div className="flex items-start justify-between">
+                <div className="flex-1 pl-12">
+                  <h2 className="text-3xl font-bold mb-2">{selectedRequest.subject}</h2>
+                  <div className="flex items-center space-x-4 rtl:space-x-reverse">
+                    <span className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium">
+                      {translateType(selectedRequest.request_type)}
+                    </span>
+                    <span className="text-white/80 text-sm">
+                      הוגש ב-{new Date(selectedRequest.submitted_at).toLocaleDateString('he-IL')}
+                    </span>
+                  </div>
+                </div>
+                <div className={`px-4 py-2 rounded-xl font-bold text-sm shadow-lg ${getStatusColor(selectedRequest.status_display)} border-2 border-white/20`}>
                   {translateStatus(selectedRequest.status_display)}
                 </div>
               </div>
             </div>
-            
-            <div className="p-6 overflow-y-auto flex-1">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="font-semibold text-lg mb-4 pb-2 border-b text-blue-900">פרטי הבקשה</h3>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <div className="text-sm font-medium text-gray-600">סוג בקשה</div>
-                      <div className="mt-1 text-gray-900">{translateType(selectedRequest.request_type)}</div>
-                    </div>
-                    
-                    <div>
-                      <div className="text-sm font-medium text-gray-600">תיאור</div>
-                      <div className="mt-1 text-gray-900 whitespace-pre-line bg-gray-50 p-3 rounded-lg border text-sm">
-                        {selectedRequest.description}
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="grid lg:grid-cols-3 gap-6 p-6">
+                {/* פרטי הבקשה */}
+                <div className="lg:col-span-2 space-y-6">
+                  {/* Student Info Card */}
+                  <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-2xl p-6 border border-gray-100">
+                    <h3 className="flex items-center text-xl font-bold text-gray-800 mb-4">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center ml-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                        </svg>
                       </div>
+                      פרטי הסטודנט
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center">
+                        <span className="font-medium text-gray-600 w-24">שם:</span>
+                        <span className="text-gray-900 font-medium">{selectedRequest.student_name}</span>
+                      </div>
+                      {selectedRequest.assigned_lecturer && (
+                        <div className="flex items-center">
+                          <span className="font-medium text-gray-600 w-24">מרצה:</span>
+                          <span className="text-gray-900">{selectedRequest.assigned_lecturer.full_name}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Request Details Card */}
+                  <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                    <h3 className="flex items-center text-xl font-bold text-gray-800 mb-4">
+                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center ml-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </div>
+                      תיאור הבקשה
+                    </h3>
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                      <p className="text-gray-800 leading-relaxed whitespace-pre-line">
+                        {selectedRequest.description}
+                      </p>
                     </div>
                     
                     {selectedRequest.file && (
-                      <div>
-                        <div className="text-sm font-medium text-gray-600">קובץ מצורף</div>
-                        <div className="mt-1">
-                          <a 
-                            href={selectedRequest.file}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                            className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 2a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2V8.414A1 1 0 0015.414 8L11.586 4.172A1 1 0 0010.879 4H6zm3 2a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1zm1 3a1 1 0 00-1 1v3a1 1 0 102 0v-3a1 1 0 00-1-1z" clipRule="evenodd" />
-                            </svg>
-                            הצג קובץ מצורף
-                          </a>
-                        </div>
+                      <div className="mt-4">
+                        <a 
+                          href={selectedRequest.file}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-lg transition-colors duration-200 border border-blue-200"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                          הורד קובץ מצורף
+                        </a>
                       </div>
                     )}
-                    
-                    <div className="mt-4 pt-4 border-t">
-                      <div className="text-sm font-medium text-gray-600 mb-2">סטטוס</div>
+                  </div>
+
+                  {/* Status Update Card */}
+                  <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl p-6 border border-orange-200">
+                    <h3 className="flex items-center text-xl font-bold text-gray-800 mb-4">
+                      <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center ml-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </div>
+                      עדכון סטטוס
+                    </h3>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">סטטוס נוכחי</label>
                       <select 
                         value={selectedRequest.status_display}
                         onChange={(e) => handleStatusUpdate(e.target.value)}
-                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm"
                       >
-                        <option value="ממתין">ממתין</option>
-                        <option value="בטיפול">בטיפול</option>
-                        <option value="אושר">אושר</option>
-                        <option value="נדחה">נדחה</option>
+                        <option value="ממתין">⏳ ממתין</option>
+                        <option value="בטיפול">🔄 בטיפול</option>
+                        <option value="אושר">✅ אושר</option>
+                        <option value="נדחה">❌ נדחה</option>
                       </select>
-                    </div>
-
-                    <div className="mt-4">
-                      <div className="text-sm font-medium text-gray-600 mb-2">פידבק (אופציונלי)</div>
-                      <textarea
-                        value={feedback}
-                        onChange={(e) => setFeedback(e.target.value)}
-                        rows={4}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        placeholder="הוסף פידבק לבקשה..."
-                      ></textarea>
                     </div>
                   </div>
                 </div>
-                
-                <div>
-                  <h3 className="font-semibold text-lg mb-4 pb-2 border-b text-blue-900">תגובות</h3>
-                  <div className="space-y-4 max-h-60 overflow-y-auto pr-3">
+
+                {/* Comments Section */}
+                <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm h-fit">
+                  <h3 className="flex items-center text-xl font-bold text-gray-800 mb-4">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center ml-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                    </div>
+                    תגובות ({comments.length})
+                  </h3>
+                  
+                  {/* Comments List */}
+                  <div className="space-y-3 max-h-60 overflow-y-auto pr-2 mb-4">
                     {comments.map((comment) => (
-                      <div key={comment.id} className="bg-gray-50 p-3 rounded-lg text-sm border">
-                        <div className="font-medium text-gray-900 mb-1">{comment.author_name}</div>
-                        <div className="text-gray-700 whitespace-pre-line">{comment.content}</div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {new Date(comment.created_at).toLocaleString()}
+                      <div key={comment.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-semibold text-gray-900 text-sm">{comment.author_name}</span>
+                          <span className="text-xs text-gray-500">
+                            {new Date(comment.timestamp).toLocaleDateString('he-IL', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
                         </div>
+                        <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">
+                          {comment.content}
+                        </p>
                       </div>
                     ))}
                     {comments.length === 0 && (
-                      <div className="text-center text-gray-500 py-4">אין תגובות לבקשה זו.</div>
-              )}
-            </div>
+                      <div className="text-center text-gray-500 py-8">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                        <p className="text-sm">אין תגובות עדיין</p>
+                      </div>
+                    )}
+                  </div>
 
-                  <div className="mt-4 pt-4 border-t">
-                    <div className="text-sm font-medium text-gray-600 mb-2">הוסף תגובה</div>
-            <textarea
+                  {/* Add Comment */}
+                  <div className="border-t border-gray-100 pt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">הוסף תגובה</label>
+                    <textarea
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
-              rows={3}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      placeholder="כתוב תגובה כאן..."
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none text-sm"
+                      placeholder="כתוב תגובה..."
                     ></textarea>
                     <button
                       onClick={handleSendComment}
                       disabled={!newComment.trim()}
-                      className="mt-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="mt-3 w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-xl transition-colors duration-200 flex items-center justify-center"
                     >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
                       שלח תגובה
-              </button>
+                    </button>
                   </div>
                 </div>
               </div>

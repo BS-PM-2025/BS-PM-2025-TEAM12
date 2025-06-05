@@ -59,3 +59,30 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"Notification for {self.user.get_full_name()}"
+
+class Feedback(models.Model):
+    RATING_CHOICES = [
+        (1, '1 - גרוע מאוד'),
+        (2, '2 - גרוע'),
+        (3, '3 - בסדר'),
+        (4, '4 - טוב'),
+        (5, '5 - מעולה'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='feedbacks')
+    rating = models.IntegerField(choices=RATING_CHOICES)
+    comment = models.TextField()
+    category = models.CharField(max_length=50, choices=[
+        ('website', 'האתר'),
+        ('process', 'תהליך הבקשות'),
+        ('general', 'כללי'),
+    ], default='general')
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_anonymous = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        user_name = "אנונימי" if self.is_anonymous else self.user.get_full_name()
+        return f"משוב מ{user_name} - דירוג: {self.rating}"

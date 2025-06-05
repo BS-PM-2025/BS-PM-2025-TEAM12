@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 import Login from './LoginForm';
 import Register from './RegisterForm';
@@ -8,6 +8,8 @@ import ResetPassword from './ResetPassword';
 
 import Dashboard from './Dashboard';
 import Profile from './Profile';
+import Feedback from './Feedback';
+import FeedbackManagement from './FeedbackManagement';
 
 import RequestPage from './RequestForms/RequestPage';
 import AppealForm from './RequestForms/AppealForm';
@@ -37,6 +39,8 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/feedback" element={<Feedback />} />
+          <Route path="/feedback-management" element={<FeedbackManagement />} />
 
           {/* ניהול משתמשים - רק למזכירה */}
           <Route
@@ -102,14 +106,14 @@ function App() {
             }
           />
 
-        <Route
-          path="/manage-requests"
-          element={
-            <ProtectedRoute allowedRoles={['admin', 'lecturer']}>
-              <ManageRequests />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/manage-requests"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'lecturer']}>
+                <ManageRequests />
+              </ProtectedRoute>
+            }
+          />
         </Route>
       </Routes>
     </Router>

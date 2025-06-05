@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Request, RequestComment, Notification
+from .models import Request, RequestComment, Notification, Feedback
 from users.models import User
 from users.serializers import UserSerializer
 from academics.serializers import CourseSerializer
@@ -26,6 +26,21 @@ class NotificationSerializer(serializers.ModelSerializer):
         model = Notification
         fields = ['id', 'message', 'is_read', 'created_at']
         read_only_fields = ['id', 'message', 'is_read', 'created_at']
+
+class FeedbackSerializer(serializers.ModelSerializer):
+    user_name = serializers.SerializerMethodField()
+    rating_display = serializers.CharField(source='get_rating_display', read_only=True)
+    category_display = serializers.CharField(source='get_category_display', read_only=True)
+
+    class Meta:
+        model = Feedback
+        fields = ['id', 'user', 'user_name', 'rating', 'rating_display', 'comment', 'category', 'category_display', 'created_at', 'is_anonymous']
+        read_only_fields = ['id', 'created_at', 'user_name']
+
+    def get_user_name(self, obj):
+        if obj.is_anonymous:
+            return None
+        return f"{obj.user.first_name} {obj.user.last_name}".strip() or obj.user.username
 
 class RequestSerializer(serializers.ModelSerializer):
     assigned_lecturer = LecturerShortSerializer(read_only=True)

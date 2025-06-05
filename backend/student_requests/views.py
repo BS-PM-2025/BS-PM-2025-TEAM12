@@ -5,8 +5,8 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.renderers import JSONRenderer
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
-from .models import Request, RequestComment, Notification
-from .serializers import RequestSerializer, RequestCommentSerializer, NotificationSerializer
+from .models import Request, RequestComment, Notification, Feedback
+from .serializers import RequestSerializer, RequestCommentSerializer, NotificationSerializer, FeedbackSerializer
 from users.models import User
 from rest_framework.parsers import MultiPartParser, FormParser
 
@@ -307,5 +307,73 @@ class NotificationsView(APIView):
         try:
             Notification.objects.filter(user_id=user_id, is_read=False).update(is_read=True)
             return Response({'message': 'כל ההתראות סומנו כנקראו'})
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class FeedbackView(APIView):
+    permission_classes = [AllowAny]
+    renderer_classes = [JSONRenderer]
+
+    def get(self, request):
+        """שליפת כל המשובים (למנהלים)"""
+        try:
+            feedbacks = Feedback.objects.all()
+            serializer = FeedbackSerializer(feedbacks, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request):
+        """יצירת משוב חדש"""
+        try:
+            user_id = request.data.get('user_id')
+            rating = request.data.get('rating')
+            comment = request.data.get('comment')
+            category = request.data.get('category', 'general')
+            is_anonymous = request.data.get('is_anonymous', False)
+
+            if not user_id:
+                return Response({'error': 'נדרש מזהה משתמש'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            if not rating or not comment:
+                return Response({'error': 'נדרש דירוג ותגובה'}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                return Response({'error': 'משתמש לא נמצא'}, status=status.HTTP_404_NOT_FOUND)
+
+            # יצירת המשוב
+            feedback = Feedback.objects.create(
+                user=user,
+                rating=rating,
+                comment=comment,
+                category=category,
+                is_anonymous=is_anonymous
+            )
+
+            serializer = FeedbackSerializer(feedback)
+            return Response({
+                'message': 'המשוב נשלח בהצלחה',
+                'feedback': serializer.data
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, feedback_id=None):
+        """מחיקת משוב (למנהלים בלבד)"""
+        try:
+            if not feedback_id:
+                return Response({'error': 'נדרש מזהה משוב'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                feedback = Feedback.objects.get(id=feedback_id)
+            except Feedback.DoesNotExist:
+                return Response({'error': 'משוב לא נמצא'}, status=status.HTTP_404_NOT_FOUND)
+            
+            feedback.delete()
+            return Response({'message': 'המשוב נמחק בהצלחה'}, status=status.HTTP_200_OK)
+            
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

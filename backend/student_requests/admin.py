@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Request, RequestComment, Notification
+from .models import Request, RequestComment, Notification, Feedback
 
 @admin.register(Request)
 class RequestAdmin(admin.ModelAdmin):
@@ -10,7 +10,7 @@ class RequestAdmin(admin.ModelAdmin):
 
 @admin.register(RequestComment)
 class RequestCommentAdmin(admin.ModelAdmin):
-    list_display = ('request', 'author', 'content', 'timestamp', 'is_read')
+    list_display = ('request', 'author', 'timestamp', 'is_read')
     list_filter = ('is_read', 'timestamp')
     search_fields = ('content', 'author__username')
 
@@ -18,4 +18,15 @@ class RequestCommentAdmin(admin.ModelAdmin):
 class NotificationAdmin(admin.ModelAdmin):
     list_display = ('user', 'message', 'created_at', 'is_read')
     list_filter = ('is_read', 'created_at')
-    search_fields = ('message', 'user__username') 
+    search_fields = ('message', 'user__username')
+
+@admin.register(Feedback)
+class FeedbackAdmin(admin.ModelAdmin):
+    list_display = ('user', 'rating', 'category', 'created_at', 'is_anonymous')
+    list_filter = ('rating', 'category', 'created_at', 'is_anonymous')
+    search_fields = ('comment', 'user__first_name', 'user__last_name')
+    readonly_fields = ('created_at',)
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('user') 

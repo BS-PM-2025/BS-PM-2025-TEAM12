@@ -40,10 +40,12 @@ export default function Sidebar() {
     const path = location.pathname;
     if (path.includes('dashboard')) setActiveTab('dashboard');
     else if (path.includes('profile')) setActiveTab('profile');
+    else if (path.includes('feedback-management')) setActiveTab('feedback-management');
+    else if (path.includes('feedback')) setActiveTab('feedback');
     else if (path.includes('user-management')) setActiveTab('user-management');
-    else if (path.includes('request') && !path.includes('manage-requests')) setActiveTab('request');
     else if (path.includes('my-requests')) setActiveTab('my-requests');
     else if (path.includes('manage-requests')) setActiveTab('manage-requests');
+    else if (path.includes('request')) setActiveTab('request');
     else setActiveTab('');
   }, [location]);
 
@@ -334,22 +336,6 @@ export default function Sidebar() {
             <>
               <li>
                 <Link 
-                  to="/request" 
-                  className={`flex items-center ${isExpanded ? 'justify-start' : 'justify-center'} p-3 rounded-xl 
-                    ${activeTab === 'request' 
-                      ? 'bg-blue-50 text-blue-600 border-r-4 border-blue-500' 
-                      : 'text-gray-600 hover:bg-gray-50'} 
-                    transition-all duration-200
-                    ${hover === 'request' && 'translate-x-1'}`}
-                  onMouseEnter={() => setHover('request')}
-                  onMouseLeave={() => setHover('')}
-                >
-                  {getIcon('request')}
-                  {isExpanded && <span className="mr-3 font-medium">הגש בקשה</span>}
-                </Link>
-              </li>
-              <li>
-                <Link 
                   to="/my-requests" 
                   className={`flex items-center ${isExpanded ? 'justify-start' : 'justify-center'} p-3 rounded-xl 
                     ${activeTab === 'my-requests' 
@@ -362,6 +348,22 @@ export default function Sidebar() {
                 >
                   {getIcon('my-requests')}
                   {isExpanded && <span className="mr-3 font-medium">הבקשות שלי</span>}
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/request" 
+                  className={`flex items-center ${isExpanded ? 'justify-start' : 'justify-center'} p-3 rounded-xl 
+                    ${activeTab === 'request' 
+                      ? 'bg-blue-50 text-blue-600 border-r-4 border-blue-500' 
+                      : 'text-gray-600 hover:bg-gray-50'} 
+                    transition-all duration-200
+                    ${hover === 'request' && 'translate-x-1'}`}
+                  onMouseEnter={() => setHover('request')}
+                  onMouseLeave={() => setHover('')}
+                >
+                  {getIcon('request')}
+                  {isExpanded && <span className="mr-3 font-medium">הגש בקשה</span>}
                 </Link>
               </li>
             </>
@@ -385,6 +387,49 @@ export default function Sidebar() {
             </li>
           )}
         </ul>
+
+        {/* קישורי משוב */}
+        <div className="mt-4">
+          {/* קישור משוב - רק לסטודנטים ומרצים */}
+          {['student', 'lecturer'].includes(role) && (
+            <Link 
+              to="/feedback" 
+              className={`flex items-center ${isExpanded ? 'justify-start' : 'justify-center'} p-3 rounded-xl 
+                ${activeTab === 'feedback' 
+                  ? 'bg-orange-50 text-orange-600 border-r-4 border-orange-500' 
+                  : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600'} 
+                transition-all duration-200
+                ${hover === 'feedback' && 'translate-x-1'}`}
+              onMouseEnter={() => setHover('feedback')}
+              onMouseLeave={() => setHover('')}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-5 h-5">
+                <path fill="currentColor" d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 13.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1-4.5h-2V6h2v5z" />
+              </svg>
+              {isExpanded && <span className="mr-3 font-medium">משוב</span>}
+            </Link>
+          )}
+          
+          {/* ניהול משובים - רק למזכירה */}
+          {role === 'admin' && (
+            <Link 
+              to="/feedback-management" 
+              className={`flex items-center ${isExpanded ? 'justify-start' : 'justify-center'} p-3 rounded-xl ${['student', 'lecturer'].includes(role) ? 'mt-2' : ''}
+                ${activeTab === 'feedback-management' 
+                  ? 'bg-purple-50 text-purple-600 border-r-4 border-purple-500' 
+                  : 'text-gray-600 hover:bg-purple-50 hover:text-purple-600'} 
+                transition-all duration-200
+                ${hover === 'feedback-management' && 'translate-x-1'}`}
+              onMouseEnter={() => setHover('feedback-management')}
+              onMouseLeave={() => setHover('')}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-5 h-5">
+                <path fill="currentColor" d="M3 3v18h18V3H3zm16 16H5V5h14v14zM7 12h2v5H7v-5zm4-6h2v11h-2V6zm4 3h2v8h-2V9z" />
+              </svg>
+              {isExpanded && <span className="mr-3 font-medium">ניהול משובים</span>}
+            </Link>
+          )}
+        </div>
 
         {/* Divider before logout */}
         <div className={`my-6 border-t border-gray-100 ${!isExpanded && 'mx-2'}`}></div>
