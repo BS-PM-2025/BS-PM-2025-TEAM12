@@ -22,6 +22,7 @@ export default function Sidebar() {
 
   // ── here we pull the logged-in user out of localStorage ───────────────────────
   const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+  console.log('Current user from localStorage:', currentUser);
   const role = currentUser.role;
   const departmentId = currentUser.departmentId ?? currentUser.department;
   
@@ -57,14 +58,18 @@ export default function Sidebar() {
   // fetch unread notifications
   const fetchNotifications = async () => {
     if (!currentUser.id) return;
+    console.log(`Fetching notifications for user: ${currentUser.id}`);
     try {
       const res = await fetch(
         `http://localhost:8000/api/notifications/unread/${currentUser.id}/`
       );
-      if (!res.ok) throw new Error();
+      console.log(`Notification response status: ${res.status}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
+      console.log(`Received notifications:`, data);
       setNotifications(data);
-    } catch {
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
       setNotifications([]);
     }
   };

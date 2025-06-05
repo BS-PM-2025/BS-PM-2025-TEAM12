@@ -189,6 +189,8 @@ class UpdateRequestStatusView(APIView):
     renderer_classes = [JSONRenderer]
 
     def put(self, request, pk):
+        print(f"=== UpdateRequestStatusView PUT called for request {pk} ===")
+        print(f"Request data: {request.data}")
         try:
             print(f"Updating request {pk} with data:", request.data)
             student_request = get_object_or_404(Request, pk=pk)
@@ -224,10 +226,22 @@ class UpdateRequestStatusView(APIView):
             print(f"Updated request status: {student_request.status}")
             
             # Create notification for student
-            Notification.objects.create(
+            print(f"Creating notification for student: {student_request.student.id}")
+            
+            # Get request type display name
+            request_type_map = {
+                'appeal': 'ערעור',
+                'exemption': 'פטור',
+                'military': 'מילואים',
+                'other': 'אחר'
+            }
+            request_type_display = request_type_map.get(student_request.request_type, student_request.request_type)
+            
+            notification = Notification.objects.create(
                 user=student_request.student,
-                message=f'הבקשה שלך "{student_request.request_type}" עודכנה לסטטוס: {new_status}'
+                message=f'הבקשה שלך "{request_type_display}" עודכנה לסטטוס: {new_status}'
             )
+            print(f"Created notification: {notification.id}, message: {notification.message}")
             
             # Serialize and return the updated request
             serializer = RequestSerializer(student_request)
@@ -252,6 +266,8 @@ class RequestCommentsView(APIView):
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request, pk):
+        print(f"=== RequestCommentsView POST called for request {pk} ===")
+        print(f"Request data: {request.data}")
         try:
             student_request = get_object_or_404(Request, pk=pk)
             author_id = request.data.get('author_id')
@@ -279,12 +295,47 @@ class RequestCommentsView(APIView):
             )
             
             # Create notification for the other user
-            other_user = student_request.student if author == student_request.assigned_lecturer else student_request.assigned_lecturer
-            if other_user:
-                Notification.objects.create(
-                    user=other_user,
-                    message=f'התקבלה תגובה חדשה לבקשה "{student_request.request_type}"'
+            print(f"Comment author: {author.id} ({author.role})")
+            print(f"Request student: {student_request.student.id}")
+            print(f"Assigned lecturer: {student_request.assigned_lecturer.id if student_request.assigned_lecturer else 'None'}")
+            
+            # Determine who should get the notification
+            notification_users = []
+            
+            if author == student_request.student:
+                # Student commented - notify lecturer and admin
+                if student_request.assigned_lecturer:
+                    notification_users.append(student_request.assigned_lecturer)
+                # Also notify admin users from the same department
+                admins = User.objects.filter(role='admin', department=student_request.student.department)
+                notification_users.extend(admins)
+            elif author == student_request.assigned_lecturer:
+                # Lecturer commented - notify student
+                notification_users.append(student_request.student)
+            elif author.role == 'admin':
+                # Admin commented - notify student and lecturer
+                notification_users.append(student_request.student)
+                if student_request.assigned_lecturer:
+                    notification_users.append(student_request.assigned_lecturer)
+            
+            # Remove duplicates and author from notification list
+            notification_users = list(set(notification_users))
+            if author in notification_users:
+                notification_users.remove(author)
+            
+            print(f"Will notify users: {[u.id for u in notification_users]}")
+            
+            # Create notifications
+            for user in notification_users:
+                print(f"Creating notification for user: {user.id} about comment from {author.id}")
+                notification = Notification.objects.create(
+                    user=user,
+                    message=f'התקבלה תגובה חדשה לבקשה "{student_request.request_type}" מאת {author.first_name} {author.last_name}'
                 )
+                print(f"Created comment notification: {notification.id}, message: {notification.message}")
+            
+            if not notification_users:
+                print("No users to notify about comment")
             
             serializer = RequestCommentSerializer(comment)
             return Response(serializer.data)
@@ -297,10 +348,15 @@ class NotificationsView(APIView):
 
     def get(self, request, user_id):
         try:
+            print(f"Fetching notifications for user: {user_id}")
             notifications = Notification.objects.filter(user_id=user_id, is_read=False)
+            print(f"Found {notifications.count()} unread notifications")
+            for notif in notifications:
+                print(f"  - Notification {notif.id}: {notif.message}")
             serializer = NotificationSerializer(notifications, many=True)
             return Response(serializer.data)
         except Exception as e:
+            print(f"Error fetching notifications: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request, user_id):

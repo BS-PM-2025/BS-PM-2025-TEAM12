@@ -106,14 +106,14 @@ function App() {
             }
           />
 
-          <Route
-            path="/manage-requests"
-            element={
-              <ProtectedRoute allowedRoles={['admin', 'lecturer']}>
-                <ManageRequests />
-              </ProtectedRoute>
-            }
-          />
+        <Route
+          path="/manage-requests"
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'lecturer']}>
+              <ManageRequests />
+            </ProtectedRoute>
+          }
+        />
         </Route>
       </Routes>
     </Router>
