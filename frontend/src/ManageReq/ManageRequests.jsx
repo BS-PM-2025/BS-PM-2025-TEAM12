@@ -375,10 +375,10 @@ export default function ManageRequests() {
                       </p>
                     </div>
                     
-                    {selectedRequest.file && (
+                    {selectedRequest.attached_file && (
                       <div className="mt-4">
                         <a 
-                          href={selectedRequest.file}
+                          href={`http://localhost:8000${selectedRequest.attached_file}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-lg transition-colors duration-200 border border-blue-200"

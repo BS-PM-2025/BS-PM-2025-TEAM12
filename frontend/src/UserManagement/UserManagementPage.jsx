@@ -1,6 +1,6 @@
 // src/UserManagement/UserManagementPage.jsx
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 
@@ -35,9 +35,6 @@ export default function UserManagementPage() {
   const [selectedCourses, setSelectedCourses] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('students');
-
-  // Create a ref to keep track of active input element
-  const activeInputRef = useRef(null);
 
   const fetchUsers = async () => {
     try {
@@ -98,31 +95,7 @@ export default function UserManagementPage() {
 
   const handleEditChange = e => {
     const { name, value } = e.target;
-    console.log(`Editing field ${name} with value: ${value}`);
-    
-    // Save the active element before state update
-    activeInputRef.current = e.target;
-    const selectionStart = e.target.selectionStart;
-    const selectionEnd = e.target.selectionEnd;
-    
-    setEditData(prevData => {
-      const newData = { ...prevData, [name]: value };
-      console.log('New edit data:', newData);
-      return newData;
-    });
-    
-    // Use requestAnimationFrame to restore focus after render
-    requestAnimationFrame(() => {
-      if (activeInputRef.current) {
-        activeInputRef.current.focus();
-        try {
-          // Restore cursor position
-          activeInputRef.current.setSelectionRange(selectionStart, selectionEnd);
-        } catch (err) {
-          console.log('Could not restore selection', err);
-        }
-      }
-    });
+    setEditData(prevData => ({ ...prevData, [name]: value }));
   };
 
   const handleSaveClick = async id => {
@@ -246,172 +219,192 @@ export default function UserManagementPage() {
     const userInitial = user.full_name?.charAt(0) || "U";
     
     return (
-      <div className="bg-white rounded-lg shadow-md overflow-hidden transition-all hover:shadow-lg mb-4">
+      <div className="bg-white rounded-xl shadow-md overflow-hidden transition-all hover:shadow-lg border border-gray-100 mb-4">
         {isEditing ? (
-          <div className="p-4">
-            <div className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">שם פרטי</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">שם פרטי</label>
                 <input
                   name="first_name"
                   value={editData.first_name || ''}
                   onChange={handleEditChange}
-                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+                  className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
                   dir="rtl"
                   lang="he"
                   autoComplete="off"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">שם משפחה</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">שם משפחה</label>
                 <input
                   name="last_name"
                   value={editData.last_name || ''}
                   onChange={handleEditChange}
-                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+                  className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
                   dir="rtl"
                   lang="he"
                   autoComplete="off"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">ת"ז</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">ת"ז</label>
                 <input
                   name="id_number"
                   value={editData.id_number || ''}
                   onChange={handleEditChange}
-                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+                  className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
                   dir="rtl"
                   autoComplete="off"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">טלפון</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">טלפון</label>
                 <input
                   name="phone_number"
                   value={editData.phone_number || ''}
                   onChange={handleEditChange}
-                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+                  className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
                   dir="rtl"
                   autoComplete="off"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">תפקיד</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">תפקיד</label>
                 <select
                   name="role"
                   value={editData.role}
                   onChange={handleEditChange}
-                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+                  className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
                 >
-                        <option value="student">סטודנט</option>
-                        <option value="lecturer">מרצה</option>
-                        <option value="admin">מזכירה</option>
-                      </select>
+                  <option value="student">סטודנט</option>
+                  <option value="lecturer">מרצה</option>
+                  <option value="admin">מזכירה</option>
+                </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">מחלקה</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">מחלקה</label>
                 <select
                   name="department"
                   value={editData.department}
                   onChange={handleEditChange}
-                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+                  className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
                 >
-                        {departments.map(d => (
-                          <option key={d.id} value={d.id}>{d.name}</option>
-                        ))}
-                      </select>
+                  {departments.map(d => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
+                  ))}
+                </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">אימייל</label>
-                <p className="p-2 bg-gray-50 rounded-lg">{user.email}</p>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">אימייל</label>
+                <div className="p-3 bg-gray-50 rounded-lg text-gray-600 border border-gray-200">{user.email}</div>
               </div>
             </div>
             
-            <div className="flex justify-center space-x-2 rtl:space-x-reverse">
+            <div className="flex justify-end space-x-3 space-x-reverse pt-4 border-t border-gray-100">
               <button
                 onClick={handleCancelClick}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
               >
                 ביטול
               </button>
               <button
                 onClick={() => handleSaveClick(user.id)}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
               >
                 שמור שינויים
               </button>
             </div>
           </div>
         ) : (
-          <div className="flex flex-col md:flex-row">
-            {/* Role indicator and avatar */}
-            <div className={`p-4 md:w-20 flex flex-row md:flex-col items-center justify-center ${roleColors[user.role]}`}>
-              <div className="bg-white h-10 w-10 rounded-full flex items-center justify-center font-bold text-lg shadow mb-0 md:mb-2">
-                {userInitial}
+          <div className="p-6">
+            <div className="flex items-start space-x-4 space-x-reverse">
+              {/* Avatar and role badge */}
+              <div className="flex-shrink-0">
+                <div className="bg-gradient-to-r from-blue-600 to-purple-500 h-16 w-16 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg">
+                  {userInitial}
+                </div>
+                <div className={`mt-2 px-3 py-1 rounded-full text-xs font-medium text-center ${roleColors[user.role]} border`}>
+                  {roleLabels[user.role]}
+                </div>
               </div>
-              <div className="text-xs font-medium mr-2 md:mr-0 mt-0 md:mt-2">{roleLabels[user.role]}</div>
-            </div>
-            
-            {/* User content */}
-            <div className="flex-1 p-4">
-              <div className="max-w-3xl mx-auto flex flex-col md:flex-row justify-between">
-                <div>
-                  <h3 className="font-bold text-lg mb-1">{user.full_name}</h3>
-                  <div className="text-sm text-gray-600 mb-3">{user.email}</div>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-2 text-sm">
-                    <div>
-                      <span className="text-gray-500">ת"ז:</span> {user.id_number}
-                    </div>
-                    <div>
-                      <span className="text-gray-500">טלפון:</span> {user.phone_number || '—'}
-                    </div>
-                    <div>
-                      <span className="text-gray-500">מחלקה:</span> {deptName}
+              
+              {/* User information */}
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between">
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-gray-900 mb-1">{user.full_name}</h3>
+                    <p className="text-gray-600 mb-4 break-all">{user.email}</p>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                      <div className="flex items-center">
+                        <span className="text-gray-500 font-medium w-20 flex-shrink-0">ת"ז:</span>
+                        <span className="text-gray-900">{user.id_number || '—'}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <span className="text-gray-500 font-medium w-20 flex-shrink-0">טלפון:</span>
+                        <span className="text-gray-900">{user.phone_number || '—'}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <span className="text-gray-500 font-medium w-20 flex-shrink-0">מחלקה:</span>
+                        <span className="text-gray-900">{deptName}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                <div className="mt-4 md:mt-0 flex flex-wrap gap-2 items-start">
-                  {isPending ? (
-                    <button
-                      onClick={() => handleApprove(user.id)}
-                      className="bg-green-600 hover:bg-green-700 text-white text-sm py-1 px-3 rounded-lg transition-colors"
-                    >
-                      אישור מרצה
-                    </button>
-                ) : (
-                  <>
+                  
+                  {/* Action buttons */}
+                  <div className="mt-4 lg:mt-0 lg:mr-4 flex flex-wrap gap-2">
+                    {isPending ? (
                       <button
-                        onClick={() => handleEditClick(user)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white text-sm py-1 px-3 rounded-lg transition-colors"
+                        onClick={() => handleApprove(user.id)}
+                        className="bg-green-600 hover:bg-green-700 text-white text-sm py-2 px-4 rounded-lg transition-colors font-medium inline-flex items-center"
                       >
-                        ערוך
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        אישור מרצה
                       </button>
-                      <button
-                        onClick={() => handleDeleteClick(user.id)}
-                        className="bg-red-600 hover:bg-red-700 text-white text-sm py-1 px-3 rounded-lg transition-colors"
-                      >
-                        מחק
-                      </button>
-                      {user.role === 'lecturer' && (
+                    ) : (
+                      <>
                         <button
-                          onClick={() => handleAssignCourses(user)}
-                          className="bg-yellow-600 hover:bg-yellow-700 text-white text-sm py-1 px-3 rounded-lg transition-colors"
+                          onClick={() => handleEditClick(user)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 px-4 rounded-lg transition-colors font-medium inline-flex items-center"
                         >
-                          השמת קורסים
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                          ערוך
                         </button>
-                      )}
-                    </>
+                        <button
+                          onClick={() => handleDeleteClick(user.id)}
+                          className="bg-red-600 hover:bg-red-700 text-white text-sm py-2 px-4 rounded-lg transition-colors font-medium inline-flex items-center"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          מחק
+                        </button>
+                        {user.role === 'lecturer' && (
+                          <button
+                            onClick={() => handleAssignCourses(user)}
+                            className="bg-purple-600 hover:bg-purple-700 text-white text-sm py-2 px-4 rounded-lg transition-colors font-medium inline-flex items-center"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                            השמת קורסים
+                          </button>
                         )}
-                      </div>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-                )}
+        )}
       </div>
-  );
+    );
   };
 
   return (

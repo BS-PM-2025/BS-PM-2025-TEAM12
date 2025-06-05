@@ -63,6 +63,11 @@ export default function Profile() {
   const handleChange = e => {
     const { name, value } = e.target;
     setEditedData(prev => ({ ...prev, [name]: value }));
+    
+    // Update currentUser state immediately for name changes to show in header
+    if (name === 'full_name') {
+      setCurrentUser(prev => ({ ...prev, full_name: value }));
+    }
   };
 
   const handlePasswordInput = e => {
@@ -94,7 +99,11 @@ export default function Profile() {
       );
       const data = await res.json();
       if (res.ok) {
-        const updated = { ...currentUser, ...editedData };
+        const updated = { 
+          ...currentUser, 
+          ...editedData,
+          full_name: editedData.full_name
+        };
         localStorage.setItem('currentUser', JSON.stringify(updated));
         setCurrentUser(updated);
         setIsEditing(false);

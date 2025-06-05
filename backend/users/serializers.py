@@ -28,9 +28,10 @@ class UserSerializer(serializers.ModelSerializer):
         required=False,
         help_text="סטטוס אישור מרצה"
     )
-    full_name = serializers.SerializerMethodField()
+    full_name = serializers.CharField(required=False, write_only=True, help_text="שם מלא לעדכון")
+    full_name_display = serializers.SerializerMethodField()
 
-    def get_full_name(self, obj):
+    def get_full_name_display(self, obj):
         return f"{obj.first_name} {obj.last_name}".strip()
 
     class Meta:
@@ -40,6 +41,7 @@ class UserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'full_name',
+            'full_name_display',
             'email',
             'id_number',
             'role',
@@ -81,6 +83,18 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
     def update(self, instance, validated_data):
+        # Handle full_name if provided
+        if 'full_name' in validated_data:
+            full_name = validated_data.pop('full_name')
+            # Split full name into first and last name
+            name_parts = full_name.strip().split(' ', 1)
+            if len(name_parts) >= 2:
+                instance.first_name = name_parts[0]
+                instance.last_name = name_parts[1]
+            else:
+                instance.first_name = name_parts[0]
+                instance.last_name = ''
+        
         # Update basic fields
         instance.first_name = validated_data.get('first_name', instance.first_name)
         instance.last_name = validated_data.get('last_name', instance.last_name)
