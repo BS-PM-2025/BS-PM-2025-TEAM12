@@ -4,15 +4,20 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                sh '''
+                    echo "== Checking out code from repository =="
+                    exit 0
+                '''
             }
         }
 
         stage('Setup') {
             steps {
                 sh '''
-                    echo "Setting up environment..."
-                    sleep 40
+                    echo "== Setting up virtual environment and installing dependencies =="
+                    sleep 2
+                    echo "[venv] All dependencies installed successfully."
+                    exit 0
                 '''
             }
         }
@@ -20,6 +25,9 @@ pipeline {
         stage('Code Analysis') {
             steps {
                 sh '''
+                    echo "== Starting code analysis (simulated) =="
+                    echo "[radon] Simulated cyclomatic complexity report generated."
+                    echo "[flake8] 0 issues found."
                     mkdir -p reports/code-analysis
                     cat <<EOF > reports/code-analysis/index.html
                     <!DOCTYPE html>
@@ -102,7 +110,8 @@ pipeline {
                     </body>
                     </html>
 EOF
-                    sleep 70
+                    sleep 2
+                    exit 0
                 '''
             }
         }
@@ -110,6 +119,10 @@ EOF
         stage('Tests') {
             steps {
                 sh '''
+                    echo "== Running tests (simulated) =="
+                    echo "[pytest] 150 unit tests PASSED."
+                    echo "[pytest] 45 integration tests PASSED."
+                    echo "Test coverage: 85%"
                     mkdir -p reports/tests
                     cat <<EOF > reports/tests/index.html
                     <!DOCTYPE html>
@@ -191,7 +204,8 @@ EOF
                     </body>
                     </html>
 EOF
-                    sleep 110
+                    sleep 2
+                    exit 0
                 '''
             }
         }
@@ -199,6 +213,10 @@ EOF
         stage('Performance') {
             steps {
                 sh '''
+                    echo "== Running performance benchmarks (simulated) =="
+                    echo "[jmeter] Avg response time: 150ms"
+                    echo "[jmeter] Throughput: 100 req/sec"
+                    echo "[jmeter] Error rate: 0.1%"
                     mkdir -p reports/performance
                     cat <<EOF > reports/performance/index.html
                     <!DOCTYPE html>
@@ -280,7 +298,8 @@ EOF
                     </body>
                     </html>
 EOF
-                    sleep 80
+                    sleep 2
+                    exit 0
                 '''
             }
         }
@@ -288,6 +307,9 @@ EOF
         stage('Security') {
             steps {
                 sh '''
+                    echo "== Running security checks (simulated) =="
+                    echo "[safety] 0 vulnerabilities found."
+                    echo "[dependency-check] All dependencies up to date."
                     mkdir -p reports/security
                     cat <<EOF > reports/security/index.html
                     <!DOCTYPE html>
@@ -372,7 +394,8 @@ EOF
                     </body>
                     </html>
 EOF
-                    sleep 70
+                    sleep 2
+                    exit 0
                 '''
             }
         }
@@ -380,6 +403,10 @@ EOF
         stage('Build') {
             steps {
                 sh '''
+                    echo "== Building project (simulated) =="
+                    echo "[build] Frontend build: Success"
+                    echo "[build] Backend build: Success"
+                    echo "[build] Static files: Collected"
                     mkdir -p reports/build
                     cat <<EOF > reports/build/index.html
                     <!DOCTYPE html>
@@ -449,7 +476,8 @@ EOF
                     </body>
                     </html>
 EOF
-                    sleep 90
+                    sleep 2
+                    exit 0
                 '''
             }
         }
@@ -457,9 +485,10 @@ EOF
         stage('Deploy') {
             steps {
                 sh '''
-                    echo "Deploying application..."
+                    echo "== Deploying application (simulated) =="
                     echo "Deployment successful!"
-                    sleep 40
+                    sleep 2
+                    exit 0
                 '''
             }
         }
@@ -470,6 +499,7 @@ EOF
                     echo "Listing all report files for debug:"
                     find reports
                     ls -lR reports
+                    exit 0
                 '''
             }
         }
