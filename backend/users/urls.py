@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import RegisterAPIView,LoginAPIView,ForgotPasswordAPIView,ResetPasswordAPIView
+from .views import RegisterAPIView, LoginAPIView, ForgotPasswordAPIView, ResetPasswordAPIView, chatbot_view
 from django.urls import path
 from .views import users_by_department
 from .views import assign_courses_to_lecturer
@@ -25,5 +25,6 @@ urlpatterns = [
     path('department/<int:department_id>/', users_by_department, name='users-by-dept'),
     path('delete/<int:user_id>/', delete_user, name='api-delete-user'),
     path('assign-courses/<int:pk>/', assign_courses_to_lecturer),
+    path('chatbot/', chatbot_view, name='chatbot-api'),
 ]
 

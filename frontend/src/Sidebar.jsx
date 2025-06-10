@@ -436,6 +436,8 @@ export default function Sidebar() {
           )}
         </div>
 
+
+
         {/* Divider before logout */}
         <div className={`my-6 border-t border-gray-100 ${!isExpanded && 'mx-2'}`}></div>
         
