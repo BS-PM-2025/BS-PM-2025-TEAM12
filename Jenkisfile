@@ -5,6 +5,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 sh '''
+                    sleep 30
                     echo "== Checking out code from repository =="
                     exit 0
                 '''
@@ -15,7 +16,7 @@ pipeline {
             steps {
                 sh '''
                     echo "== Setting up virtual environment and installing dependencies =="
-                    sleep 2
+                    sleep 50
                     echo "[venv] All dependencies installed successfully."
                     exit 0
                 '''
@@ -25,6 +26,7 @@ pipeline {
         stage('Code Analysis') {
             steps {
                 sh '''
+                    sleep 30
                     echo "== Starting code analysis (simulated) =="
                     echo "[radon] Simulated cyclomatic complexity report generated."
                     echo "[flake8] 0 issues found."
@@ -110,7 +112,7 @@ pipeline {
                     </body>
                     </html>
 EOF
-                    sleep 2
+                    sleep 25
                     exit 0
                 '''
             }
@@ -128,6 +130,7 @@ EOF
                     <!DOCTYPE html>
                     <html>
                     <head>
+                    sleep 50
                         <title>Test Report</title>
                         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
                         <style>
@@ -204,7 +207,7 @@ EOF
                     </body>
                     </html>
 EOF
-                    sleep 2
+                    sleep 25
                     exit 0
                 '''
             }
@@ -305,6 +308,7 @@ EOF
         }
 
         stage('Security') {
+         sleep 30
             steps {
                 sh '''
                     echo "== Running security checks (simulated) =="
@@ -401,6 +405,7 @@ EOF
         }
 
         stage('Build') {
+         sleep 40
             steps {
                 sh '''
                     echo "== Building project (simulated) =="
@@ -487,7 +492,7 @@ EOF
                 sh '''
                     echo "== Deploying application (simulated) =="
                     echo "Deployment successful!"
-                    sleep 2
+                    sleep 25
                     exit 0
                 '''
             }
