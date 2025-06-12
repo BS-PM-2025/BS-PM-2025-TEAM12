@@ -198,7 +198,7 @@ export default function AppealForm() {
               >
             <option value="">בחר מרצה</option>
             {selectedLecturers.map(l => (
-              <option key={l.id} value={l.id}>{l.full_name}</option>
+               <option key={l.id} value={l.id}>{`${l.first_name} ${l.last_name}`.trim() || 'שם לא זמין'}</option>
             ))}
           </select>
               {formData.course && selectedLecturers.length === 0 && (
