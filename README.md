@@ -10,7 +10,7 @@
 ## ⚡ התקנה והרצה מקומית
 
 ### שלב ראשון – קובץ .env
-- יש להוריד את קובץ ה-`.env` מהקישור שקיבלת בקבוצת הפרויקט.
+- יש להוריד את קובץ ה-`.env` מהקישור הבא: https://drive.google.com/file/d/1UHJvjXulNRyFLYQp0fViOkuItKpPrQcz/view?usp=sharing
 - יש למקם אותו בתיקיית `backend` אחרי שהורדת את הקוד (`git clone`).
 
 ---
